@@ -1,0 +1,8 @@
+[package]
+name = "api"
+version = "0.0.1"
+authors = ["Srimanta Barua <srimanta.barua1@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+httparse = "1.3.4"

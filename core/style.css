@@ -33,11 +33,22 @@ a:hover {
   width: 95%;
 }
 
+#contact {
+  margin: 1em;
+}
+
+.contact-link {
+  display: inline;
+  margin-left: 1em;
+  margin-right: 1em;
+  color: #666666;
+}
+
 #navbar {
   margin: 1em;
   padding: 0.5em;
-  border-top: 1px solid #e8e8e8;
-  border-bottom: 1px solid #e8e8e8;
+  border-top: 1px solid #E8E8E8;
+  border-bottom: 1px solid #E8E8E8;
 }
 
 .navbar-elem {
@@ -62,8 +73,8 @@ a:hover {
 }
 
 #content a:hover {
-	color: #aaaaaa;
-	border-bottom: 1px #aaaaaa solid;
+	color: #AAAAAA;
+	border-bottom: 1px #AAAAAA solid;
 }
 
 #content p {
