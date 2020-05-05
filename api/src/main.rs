@@ -6,8 +6,22 @@ use std::fs;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 
+use serde::{Deserialize};
+
 mod threadpool;
 use threadpool::ThreadPool;
+
+#[derive(Deserialize)]
+struct Project {
+    name: String,
+    langs: Vec<String>,
+    path: String,
+}
+
+#[derive(Deserialize)]
+struct Projects {
+    projects: Vec<Project>,
+}
 
 fn send_response(mut stream: TcpStream, resp: &str) {
     if stream.write(resp.as_bytes()).is_ok() {
@@ -21,9 +35,26 @@ fn send_404(stream: TcpStream) {
 }
 
 fn send_file(stream: TcpStream, path: &str, typ: &str) {
-    let data = fs::read_to_string(path).unwrap();
-    let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\n\r\n{}", typ, data);
-    send_response(stream, &resp);
+    if let Ok(data) = fs::read_to_string(path) {
+        let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\n\r\n{}", typ, data);
+        send_response(stream, &resp);
+    } else {
+        send_404(stream);
+    }
+}
+
+fn send_project_html(stream: TcpStream, mut proj_root: String, proj_name: &str) {
+    let proj_json_path = proj_root.clone() + "/projects.json";
+    if let Ok(raw_proj_json) = fs::read_to_string(proj_json_path) {
+        let projects: Projects = serde_json::from_str(&raw_proj_json).unwrap();
+        for project in &projects.projects {
+            if project.name == proj_name {
+                proj_root += &project.path;
+                return send_file(stream, &proj_root, "text/html");
+            }
+        }
+    }
+    send_404(stream);
 }
 
 fn handle_connection(mut stream: TcpStream, mut proj_root: String, mut blog_root: String) {
@@ -42,6 +73,10 @@ fn handle_connection(mut stream: TcpStream, mut proj_root: String, mut blog_root
             let mut components = path.split("/").filter(|s| s.len() > 0);
             match components.next() {
                 Some("api") => match components.next() {
+                    Some("project") => match components.next() {
+                        Some(proj_name) => return send_project_html(stream, proj_root, proj_name),
+                        _ => return send_404(stream),
+                    },
                     Some("projects") => match components.next() {
                         Some("list") => {
                             proj_root += "/projects.json";

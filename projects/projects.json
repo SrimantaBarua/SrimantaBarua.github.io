@@ -2,28 +2,28 @@
     "projects": [
         {
             "name" : "Barua's EDitor",
-            "link" : "https://github.com/SrimantaBarua/bed",
-            "langs" : ["Rust"]
+            "langs" : ["Rust"],
+            "path" : "bed.html"
         },
         {
             "name" : "Barua's Terminal Emulator",
-            "link" : "https://github.com/SrimantaBarua/bte",
-            "langs" : ["C"]
+            "langs" : ["C"],
+            "path" : "bte.html"
         },
         {
             "name" : "Tiny Microkernel Operating System",
-            "link" : "https://github.com/SrimantaBarua/tmos",
-            "langs" : ["C", "NASM"]
+            "langs" : ["C", "NASM"],
+            "path" : "tmos.html"
         },
         {
             "name" : "rster",
-            "link" : "https://github.com/SrimantaBarua/rster",
-            "langs" : ["Rust"]
+            "langs" : ["Rust"],
+            "path" : "rster.html"
         },
         {
             "name" : "tinyhttp",
-            "link" : "https://github.com/SrimantaBarua/tinyhttp",
-            "langs" : ["C"]
+            "langs" : ["C"],
+            "path" : "tinyhttp.html"
         }
     ]
 }

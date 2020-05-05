@@ -1,8 +1,18 @@
 function load_project(proj_id, proj_name) {
-    //var xhr = new XMLHttpRequest();
-    //xhr.open("GET", "api/project/" + proj_name);
-    var elem = documents.getElementById(proj_id);
-    elem.innerHTML = '<div class="project-description"><p>Empty description</p></div>';
+    var elem = document.getElementById(proj_id);
+    if (elem.childElementCount >= 2) {
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "api/project/" + proj_name);
+    xhr.responseType = "text";
+    xhr.send();
+    xhr.onload = function() {
+        var node = document.createElement("div");
+        node.classList.add("project-description");
+        node.innerHTML = xhr.response;
+        elem.appendChild(node);
+    }
 }
 
 
