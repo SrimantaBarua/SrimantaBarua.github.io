@@ -1,6 +1,7 @@
 // API server for my website
 // (C) 2020 Srimanta Barua <srimanta.barua1@gmail.com>
 
+use std::env;
 use std::fs;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
@@ -25,7 +26,7 @@ fn send_file(stream: TcpStream, path: &str, typ: &str) {
     send_response(stream, &resp);
 }
 
-fn handle_connection(mut stream: TcpStream, proj_root: &str, blog_root: &str) {
+fn handle_connection(mut stream: TcpStream, mut proj_root: String, mut blog_root: String) {
     let mut headers = [httparse::EMPTY_HEADER; 16];
     let mut req = httparse::Request::new(&mut headers);
     let mut buf = [0; 512];
@@ -43,8 +44,8 @@ fn handle_connection(mut stream: TcpStream, proj_root: &str, blog_root: &str) {
                 Some("api") => match components.next() {
                     Some("projects") => match components.next() {
                         Some("list") => {
-                            let path = proj_root.to_owned() + "/projects.json";
-                            send_file(stream, &path, "application/json");
+                            proj_root += "/projects.json";
+                            send_file(stream, &proj_root, "application/json");
                         }
                         _ => return send_404(stream),
                     },
@@ -57,17 +58,21 @@ fn handle_connection(mut stream: TcpStream, proj_root: &str, blog_root: &str) {
     }
 }
 
-static PROJ_ROOT: &str = "/home/barua/Documents/website/projects";
-static BLOG_ROOT: &str = "/home/barua/Documents/website/blog";
-
 fn main() {
+    let args = env::args().collect::<Vec<_>>();
+    if args.len() != 3 {
+        println!("USAGE: {} <path/to/projects> <path/to/blog>", args[0]);
+        return;
+    }
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     {
         let mut pool = ThreadPool::new(8);
         for stream in listener.incoming() {
+            let proj_root = args[1].clone();
+            let blog_root = args[2].clone();
             if let Ok(stream) = stream {
-                pool.run(|| {
-                    handle_connection(stream, PROJ_ROOT, BLOG_ROOT);
+                pool.run(move || {
+                    handle_connection(stream, proj_root, blog_root);
                 })
             }
         }
