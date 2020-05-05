@@ -68,7 +68,6 @@ a:hover {
 
 #content a {
 	color: #444444;
-	text-decoration: none;
 	border-bottom: 1px #444444 solid;
 }
 
@@ -104,6 +103,7 @@ a:hover {
 
 .project-langs {
   margin-left: 1em;
+  font-size: 0.8em;
 }
 
 @media all and (max-width: 1000px) {
