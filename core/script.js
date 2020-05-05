@@ -33,7 +33,7 @@ function display_blogs() {
         // Form HTML
         var elem_html = '';
         for (var i = 0; i < blogs.length; i++) {
-            var date = Date(blog.date);
+            var date = new Date(blog.date);
             var datefmt = MONTHS[date.getMonth()] + " " + date.getDate().toString();
             datefmt += ", " + date.getYear().toString();
             const blog_id = 'blog-num-' + i.toString();
