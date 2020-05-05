@@ -33,11 +33,11 @@ function display_blogs() {
         // Form HTML
         var elem_html = '';
         for (var i = 0; i < blogs.length; i++) {
-            var date = new Date(blog.date);
+            var date = new Date(blogs[i].date);
             var datefmt = MONTHS[date.getMonth()] + " " + date.getDate().toString();
             datefmt += ", " + date.getYear().toString();
             const blog_id = 'blog-num-' + i.toString();
-            const fncall = "load_blog(" + blog_id + ",'" + blog.key + "')"
+            const fncall = "load_blog(" + blog_id + ",'" + blogs[i].key + "')"
             elem_html += '<div class="blog" id="' + blog_id + '">'
             elem_html += '<div class="blog-blurb"><h3 class="blog-title">'
             elem_html += '<a href="#" onClick="' + fncall + '">';
