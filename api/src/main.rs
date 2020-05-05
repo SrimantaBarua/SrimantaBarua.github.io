@@ -51,6 +51,7 @@ fn send_project_html(stream: TcpStream, mut proj_root: String, proj_name: &str) 
         let projects: Projects = serde_json::from_str(&raw_proj_json).unwrap();
         for project in &projects.projects {
             if project.name == proj_name {
+                proj_root += "/";
                 proj_root += &project.path;
                 return send_file(stream, &proj_root, "text/html");
             }
