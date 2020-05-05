@@ -35,7 +35,7 @@ function display_blogs() {
         for (var i = 0; i < blogs.length; i++) {
             var date = new Date(blogs[i].date);
             var datefmt = MONTHS[date.getMonth()] + " " + date.getDate().toString();
-            datefmt += ", " + date.getYear().toString();
+            datefmt += ", " + date.getFullYear().toString();
             const blog_id = 'blog-num-' + i.toString();
             const fncall = "load_blog(" + blog_id + ",'" + blogs[i].key + "')"
             elem_html += '<div class="blog" id="' + blog_id + '">'
