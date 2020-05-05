@@ -37,6 +37,7 @@ fn handle_connection(mut stream: TcpStream, proj_root: &str, blog_root: &str) {
     match req.method {
         Some("GET") => {
             let path = req.path.unwrap_or("");
+            println!("Req path: {}", path);
             let mut components = path.split("/").filter(|s| s.len() > 0);
             match components.next() {
                 Some("api") => match components.next() {
