@@ -44,6 +44,8 @@ fn send_file(stream: TcpStream, path: &str, typ: &str) {
 }
 
 fn send_project_html(stream: TcpStream, mut proj_root: String, proj_name: &str) {
+    // Replace '%20' with space
+    let proj_name = proj_name.replace("%20", " ");
     let proj_json_path = proj_root.clone() + "/projects.json";
     if let Ok(raw_proj_json) = fs::read_to_string(proj_json_path) {
         let projects: Projects = serde_json::from_str(&raw_proj_json).unwrap();
