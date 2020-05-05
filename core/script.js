@@ -4,8 +4,26 @@ function display_projects() {
     xhr.responseType = "json";
     xhr.send();
     xhr.onload = function() {
-        var json_data = xhr.response;
-        console.log(JSON.stringify(json_data));
+        const json_data = xhr.response;
+        const projects = json_data["projects"];
+        // Form HTML
+        var elem_html = '<div class="project">';
+        for (var i = 0; i < projects.length; i++) {
+            var proj_html = '<div class="project-blurb"><h3 class="project-name">';
+            proj_html += projects[i]["name"] + '</h3><p class="project-langs">';
+            const langs = projects[i]["langs"];
+            if (langs.length > 0) {
+                proj_html += langs[0];
+                for (var j = 1; j < langs.length; j++) {
+                    proj_html += "&bull; " + langs[j];
+                }
+            }
+            elem_html += proj_html + "</p></div>";
+        }
+        elem_html += "</div>";
+        // Insert into DOM
+        var place_to_insert = document.getElementById("content-projects");
+        place_to_insert.innerHTML = elem_html;
     }
 }
 
