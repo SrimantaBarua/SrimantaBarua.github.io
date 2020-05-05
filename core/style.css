@@ -80,8 +80,12 @@ a:hover {
   padding-bottom: 1em;
 }
 
+.project {
+  padding-bottom: 0.75em;
+}
+
 .project-description {
-  margin-bottom: 2em;
+  margin-bottom: 1em;
 }
 
 .project-blurb {
@@ -98,6 +102,28 @@ a:hover {
 .project-langs {
   margin-left: 1em;
   font-size: 0.8em;
+  color: #666666;
+}
+
+.blog {
+  padding-bottom: 0.75em;
+}
+
+.blog-blurb {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
+.blog-title {
+  margin-right: 1em;
+}
+
+.blog-date {
+  margin-left: 1em;
+  font-size: 0.8em;
+  color: #666666;
 }
 
 @media all and (max-width: 1000px) {
