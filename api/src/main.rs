@@ -87,6 +87,13 @@ fn handle_connection(mut stream: TcpStream, mut proj_root: String, mut blog_root
                         }
                         _ => return send_404(stream),
                     },
+                    Some("blogs") => match components.next() {
+                        Some("list") => {
+                            blog_root += "/blogs.json";
+                            send_file(stream, &blog_root, "application/json");
+                        }
+                        _ => return send_404(stream),
+                    }
                     _ => return send_404(stream),
                 },
                 _ => return send_404(stream),
