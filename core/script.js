@@ -19,9 +19,10 @@ function display_projects() {
         for (var i = 0; i < projects.length; i++) {
             const proj_id = 'project-num-' + i.toString();
             const proj_name = projects[i].name;
+            const fncall = "load_project('" + proj_id + "','" + proj_name + "')"
             elem_html += '<div class="project" id="' + proj_id + '">'
             elem_html += '<div class="project-blurb"><h3 class="project-name">'
-            elem_html += '<a href="#" onClick="load_project(' + proj_id + ',' + proj_name + ')">';
+            elem_html += '<a href="#" onClick="' + fncall + '")">';
             elem_html += projects[i]["name"] + '</a></h3><p class="project-langs">';
             const langs = projects[i]["langs"];
             if (langs.length > 0) {
