@@ -39,11 +39,14 @@ fn handle_connection(mut stream: TcpStream, proj_root: &str, blog_root: &str) {
             let path = req.path.unwrap_or("");
             let mut components = path.split("/").filter(|s| s.len() > 0);
             match components.next() {
-                Some("projects") => match components.next() {
-                    Some("list") => {
-                        let path = proj_root.to_owned() + "/projects.json";
-                        send_file(stream, &path, "application/json");
-                    }
+                Some("api") => match components.next() {
+                    Some("projects") => match components.next() {
+                        Some("list") => {
+                            let path = proj_root.to_owned() + "/projects.json";
+                            send_file(stream, &path, "application/json");
+                        }
+                        _ => return send_404(stream),
+                    },
                     _ => return send_404(stream),
                 },
                 _ => return send_404(stream),
