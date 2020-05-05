@@ -17,6 +17,10 @@ function load_project(proj_id, proj_name) {
 
 
 function display_projects() {
+    var place_to_insert = document.getElementById("content-projects");
+    if (place_to_insert.childElementCount > 0) {
+        return;
+    }
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/projects/list");
     xhr.responseType = "json";
@@ -44,7 +48,6 @@ function display_projects() {
             elem_html += "</p></div></div>";
         }
         // Insert into DOM
-        var place_to_insert = document.getElementById("content-projects");
         place_to_insert.innerHTML = elem_html;
     }
 }

@@ -77,17 +77,11 @@ a:hover {
 }
 
 #content p {
-  padding-bottom: 0.5em;
+  padding-bottom: 1em;
 }
 
-.contact-type {
-  font-weight: bold;
-  padding-right: 2em;
-}
-
-.contact-address {
-  font-weight: lighter;
-  padding-left: 2em;
+.project-description {
+  margin-bottom: 2em;
 }
 
 .project-blurb {
