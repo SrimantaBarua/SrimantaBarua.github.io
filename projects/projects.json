@@ -1,0 +1,24 @@
+{
+    "projects": [
+        {
+            "name" : "Barua's EDitor",
+            "link" : "https://github.com/SrimantaBarua/bed",
+            "path" : "projects/bed.html"
+        },
+        {
+            "name" : "Barua's Terminal Emulator",
+            "link" : "https://github.com/SrimantaBarua/bte",
+            "path" : "projects/bte.html"
+        },
+        {
+            "name" : "Tiny Microkernel Operating System",
+            "link" : "https://github.com/SrimantaBarua/tmos",
+            "path" : "projects/tmos.html"
+        },
+        {
+            "name" : "rster",
+            "link" : "https://github.com/SrimantaBarua/rster",
+            "path" : "projects/rster.html"
+        }
+    ]
+}
