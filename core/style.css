@@ -1,0 +1,91 @@
+body, pre, html, p, a, h1, h2, h3, h4, h5, h6, button, ul, li, header {
+  margin: 0;
+	padding: 0;
+}
+
+html {
+  font-family: Roboto;
+  text-align: center;
+  font-size: 20px;
+  color: #333333;
+  height: 100%;
+}
+
+a {
+	transition: all 0.15s;
+	text-decoration: none;
+	color: #222222;
+}
+
+a:hover {
+	color: #AAAAAA;
+	cursor: pointer;
+}
+
+#title {
+  font-size: 2.25em;
+  font-weight: normal;
+  margin-top: 1em;
+}
+
+#main {
+  margin: auto;
+  width: 95%;
+}
+
+#navbar {
+  margin: 1em;
+  padding: 0.5em;
+  border-top: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.navbar-elem {
+  display: inline;
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+#content {
+  text-align: justify;
+  line-height: 1.5em;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 2em;
+  width: 50%;
+}
+
+#content a {
+	color: #444444;
+	text-decoration: none;
+	border-bottom: 1px #444444 solid;
+}
+
+#content a:hover {
+	color: #aaaaaa;
+	border-bottom: 1px #aaaaaa solid;
+}
+
+#content p {
+  padding-bottom: 0.5em;
+}
+
+.contact-type {
+  font-weight: bold;
+  padding-right: 2em;
+}
+
+.contact-address {
+  font-weight: lighter;
+  padding-left: 2em;
+}
+
+@media all and (max-width: 1000px) {
+  #main {
+    width: 100%;
+  }
+
+  #content {
+    width: 80%;
+  }
+}
