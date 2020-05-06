@@ -99,6 +99,14 @@ a:hover {
   margin-right: 1em;
 }
 
+.project-name a {
+	text-decoration: none;
+}
+
+.project-name a:hover {
+	text-decoration: none;
+}
+
 .project-langs {
   margin-left: 1em;
   font-size: 0.8em;
@@ -120,6 +128,14 @@ a:hover {
   margin-right: 1em;
 }
 
+.blog-title a {
+	text-decoration: none;
+}
+
+.blog-title a:hover {
+	text-decoration: none;
+}
+
 .blog-date {
   margin-left: 1em;
   font-size: 0.8em;
@@ -127,11 +143,19 @@ a:hover {
 }
 
 @media all and (max-width: 1000px) {
+  html {
+    font-size: 12px;
+  }
+
   #main {
     width: 100%;
   }
 
   #content {
     width: 80%;
+  }
+
+  .blog-date {
+    display: none;
   }
 }
