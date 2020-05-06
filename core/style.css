@@ -233,11 +233,12 @@ p a:hover {
 /* SPINNER ANIMATION */
 
 .load-spinner {
-  border: 2px solid #AAAAAA;
-  border-top: 2px solid #444444;
+  border: 3px solid #E8E8E8E8;
+  border-top: 3px solid #444444;
   border-radius: 50%;
   width: 1em;
   height: 1em;
+  margin: auto;
   animation: spin 2s linear infinite;
 }
 
