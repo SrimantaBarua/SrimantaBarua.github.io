@@ -1,13 +1,11 @@
 <p><a href="https://github.com/minos-org/dzen2">dzen2</a> is a fork of <a href="https://github.com/robm/dzen">dzen</a>, which is a <em>general purpose messaging, notification and menuing program for X11.</em> What most people use it for, however, is to create cool-looking and highly functional statusbars/docks. (Just look at <a href="https://imgur.com/bZegioR">earsplit's desktop</a> to get an idea).</p>
 <p>How you go about doing this, is you craft the content of the status line, and pipe it into dzen2. Let's try a sample "Hello world" to demonstrate. I'll periodically write the output of <code>date</code>, with a 1 second sleep, to dzen2.</p>
-<pre class="language-bash">
-while :; do date; sleep 1; done | dzen2
-</pre>
+<pre><code class="language-bash">while :; do date; sleep 1; done | dzen2</code></pre>
 <p>Usually, you'd probably do this in Bash or Python, which is the sane thing to do. I, however, prefer to stick to C. So here we go.</p>
 <p>Let's start with a goal in mind. I want to get a bar which outputs the current music I'm playing and its playing/paused state, the current audio volume, WiFi SSID, battery percentage with colour coding, kernel version, and date/time. So let's put a framework in place for that. Now, since the different elements are probably going to change at different rates, how I'm going to do this is maintain global buffers for each element, which will be updated at different times, and which I'll then combine into a consolidated statusline when any element has changed, and pipe this to dzen2.</p>
-<pre class="language-c">
-#include <stdio.h>
-#include <stdlib.h>
+<pre><code class="language-c">
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
 
 
 static char music_buf[128] = { 0 };
@@ -59,7 +57,7 @@ int main() {
 	}
 	return 0;
 }
-</pre>
+</code></pre>
 <p>Now we just need to fill in those functions, right? Well.. not so simple. Okay, some of them <em>are</em> pretty straightforward. Let's fill in the functions one by one. Starting with <code>read_datetime()</code>, where we just use <code>strftime()</code> to format the current date/time in the desired format of Day, Date Month Hour:Minute. eg. Mon, 24 Sep 23:53.</p>
 <pre class="code-block">
 <span class="fc_13">#include</span> <span class="fc_5">&lt;sys/time.h&gt;</span>
