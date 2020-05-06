@@ -28,6 +28,7 @@ function load_blog(blog_id, blog_key) {
         node.classList.add("blog-text");
         node.innerHTML = xhr.response;
         elem.appendChild(node);
+        Prism.highlightAllUnder(elem);
     }
 }
 

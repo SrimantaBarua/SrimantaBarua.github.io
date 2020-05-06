@@ -4,8 +4,8 @@
 <p>Usually, you'd probably do this in Bash or Python, which is the sane thing to do. I, however, prefer to stick to C. So here we go.</p>
 <p>Let's start with a goal in mind. I want to get a bar which outputs the current music I'm playing and its playing/paused state, the current audio volume, WiFi SSID, battery percentage with colour coding, kernel version, and date/time. So let's put a framework in place for that. Now, since the different elements are probably going to change at different rates, how I'm going to do this is maintain global buffers for each element, which will be updated at different times, and which I'll then combine into a consolidated statusline when any element has changed, and pipe this to dzen2.</p>
 <pre><code class="language-c">
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
+#include <stdio.h>
+#include <stdlib.h>
 
 
 static char music_buf[128] = { 0 };
