@@ -1,6 +1,6 @@
 body, pre, html, p, a, h1, h2, h3, h4, h5, h6, button, ul, li, header {
   margin: 0;
-	padding: 0;
+  padding: 0;
 }
 
 html {
@@ -12,14 +12,14 @@ html {
 }
 
 a {
-	transition: all 0.15s;
-	text-decoration: none;
-	color: #222222;
+  transition: all 0.15s;
+  text-decoration: none;
+  color: #222222;
 }
 
 a:hover {
-	color: #AAAAAA;
-	cursor: pointer;
+  color: #AAAAAA;
+  cursor: pointer;
 }
 
 #title {
@@ -66,14 +66,14 @@ a:hover {
   width: 50%;
 }
 
-#content a {
-	color: #444444;
-	border-bottom: 1px #444444 solid;
+p a {
+  color: #444444;
+  border-bottom: 1px #444444 solid;
 }
 
-#content a:hover {
-	color: #AAAAAA;
-	border-bottom: 1px #AAAAAA solid;
+p a:hover {
+  color: #AAAAAA;
+  border-bottom: 1px #AAAAAA solid;
 }
 
 #content p {
@@ -99,14 +99,6 @@ a:hover {
   margin-right: 1em;
 }
 
-.project-name a {
-	text-decoration: none;
-}
-
-.project-name a:hover {
-	text-decoration: none;
-}
-
 .project-langs {
   margin-left: 1em;
   font-size: 0.8em;
@@ -126,14 +118,6 @@ a:hover {
 
 .blog-title {
   margin-right: 1em;
-}
-
-.blog-title a {
-	text-decoration: none;
-}
-
-.blog-title a:hover {
-	text-decoration: none;
 }
 
 .blog-date {
