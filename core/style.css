@@ -81,7 +81,7 @@ p a:hover {
 }
 
 .project {
-  padding-bottom: 0.75em;
+  padding-bottom: 1.5em;
 }
 
 .project-description {
@@ -106,7 +106,7 @@ p a:hover {
 }
 
 .blog {
-  padding-bottom: 0.75em;
+  padding-bottom: 1.5em;
 }
 
 .blog-blurb {
@@ -124,6 +124,10 @@ p a:hover {
   margin-left: 1em;
   font-size: 0.8em;
   color: #666666;
+}
+
+.blog-text {
+  margin-bottom: 1em;
 }
 
 @media all and (max-width: 1000px) {
