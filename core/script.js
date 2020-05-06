@@ -129,7 +129,7 @@ function display_blogs() {
             var datefmt = MONTHS[date.getMonth()] + " " + date.getDate().toString();
             datefmt += ", " + date.getFullYear().toString();
             const blog_id = 'blog-num-' + i.toString();
-            const fncall = "load_blog('" + blog_id + "','" + blogs[i].key.toString() + "')"
+            const fncall = "blog_show_toggle('" + blog_id + "','" + blogs[i].key.toString() + "')"
             elem_html += '<div class="blog" id="' + blog_id + '">'
             elem_html += '<div class="blog-blurb"><h3 class="blog-title">'
             elem_html += '<a href="#" onClick="' + fncall + '">';
