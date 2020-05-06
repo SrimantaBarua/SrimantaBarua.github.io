@@ -2,11 +2,11 @@
 // (C) 2020 Srimanta Barua <srimanta.barua1@gmail.com>
 
 use std::env;
-use std::fs;
+use std::fs::{self, File};
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 
-use serde::{Deserialize};
+use serde::Deserialize;
 
 mod threadpool;
 use threadpool::ThreadPool;
@@ -35,12 +35,13 @@ fn send_404(stream: TcpStream) {
 }
 
 fn send_file(stream: TcpStream, path: &str, typ: &str) {
-    if let Ok(data) = fs::read_to_string(path) {
-        let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\n\r\n{}", typ, data);
-        send_response(stream, &resp);
-    } else {
-        send_404(stream);
+    let mut resp = format!("HTTP/1.1 200 OK\r\nContent-Type: {}\r\n\r\n", typ);
+    if let Ok(mut f) = File::open(path) {
+        if f.read_to_string(&mut resp).is_ok() {
+            return send_response(stream, &resp);
+        }
     }
+    send_404(stream);
 }
 
 fn send_project_html(stream: TcpStream, mut proj_root: String, proj_name: &str) {
@@ -56,6 +57,16 @@ fn send_project_html(stream: TcpStream, mut proj_root: String, proj_name: &str) 
                 return send_file(stream, &proj_root, "text/html");
             }
         }
+    }
+    send_404(stream);
+}
+
+fn send_blog_html(stream: TcpStream, mut blog_root: String, key: &str) {
+    if key.parse::<u64>().is_ok() {
+        blog_root += "/post";
+        blog_root += key;
+        blog_root += ".html";
+        return send_file(stream, &blog_root, "text/html");
     }
     send_404(stream);
 }
@@ -87,13 +98,17 @@ fn handle_connection(mut stream: TcpStream, mut proj_root: String, mut blog_root
                         }
                         _ => return send_404(stream),
                     },
+                    Some("blog") => match components.next() {
+                        Some(key) => return send_blog_html(stream, blog_root, key),
+                        _ => return send_404(stream),
+                    },
                     Some("blogs") => match components.next() {
                         Some("list") => {
                             blog_root += "/blogs.json";
                             send_file(stream, &blog_root, "application/json");
                         }
                         _ => return send_404(stream),
-                    }
+                    },
                     _ => return send_404(stream),
                 },
                 _ => return send_404(stream),

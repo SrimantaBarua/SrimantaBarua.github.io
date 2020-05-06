@@ -15,6 +15,20 @@ const MONTHS = [
 
 
 function load_blog(blog_id, blog_key) {
+    var elem = document.getElementById(blog_id);
+    if (elem.childElementCount >= 2) {
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "api/blog/" + blog_key);
+    xhr.responseType = "text";
+    xhr.send();
+    xhr.onload = function() {
+        var node = document.createElement("div");
+        node.classList.add("blog-text");
+        node.innerHTML = xhr.response;
+        elem.appendChild(node);
+    }
 }
 
 
@@ -37,7 +51,7 @@ function display_blogs() {
             var datefmt = MONTHS[date.getMonth()] + " " + date.getDate().toString();
             datefmt += ", " + date.getFullYear().toString();
             const blog_id = 'blog-num-' + i.toString();
-            const fncall = "load_blog(" + blog_id + ",'" + blogs[i].key + "')"
+            const fncall = "load_blog('" + blog_id + "','" + blogs[i].key.toString() + "')"
             elem_html += '<div class="blog" id="' + blog_id + '">'
             elem_html += '<div class="blog-blurb"><h3 class="blog-title">'
             elem_html += '<a href="#" onClick="' + fncall + '">';
