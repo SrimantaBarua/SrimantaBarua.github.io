@@ -1,11 +1,11 @@
 <p><a href="https://github.com/minos-org/dzen2">dzen2</a> is a fork of <a href="https://github.com/robm/dzen">dzen</a>, which is a <em>general purpose messaging, notification and menuing program for X11.</em> What most people use it for, however, is to create cool-looking and highly functional statusbars/docks. (Just look at <a href="https://imgur.com/bZegioR">earsplit's desktop</a> to get an idea).</p>
 <p>How you go about doing this, is you craft the content of the status line, and pipe it into dzen2. Let's try a sample "Hello world" to demonstrate. I'll periodically write the output of <code>date</code>, with a 1 second sleep, to dzen2.</p>
-<pre><code class="language-bash">while :; do date; sleep 1; done | dzen2</code></pre>
+<pre><code class="command-line language-bash" data-user="barua" data-host="box">while :; do date; sleep 1; done | dzen2</code></pre>
 <p>Usually, you'd probably do this in Bash or Python, which is the sane thing to do. I, however, prefer to stick to C. So here we go.</p>
 <p>Let's start with a goal in mind. I want to get a bar which outputs the current music I'm playing and its playing/paused state, the current audio volume, WiFi SSID, battery percentage with colour coding, kernel version, and date/time. So let's put a framework in place for that. Now, since the different elements are probably going to change at different rates, how I'm going to do this is maintain global buffers for each element, which will be updated at different times, and which I'll then combine into a consolidated statusline when any element has changed, and pipe this to dzen2.</p>
 <pre><code class="language-c">
-#include <stdio.h>
-#include <stdlib.h>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
 
 
 static char music_buf[128] = { 0 };
@@ -59,404 +59,404 @@ int main() {
 }
 </code></pre>
 <p>Now we just need to fill in those functions, right? Well.. not so simple. Okay, some of them <em>are</em> pretty straightforward. Let's fill in the functions one by one. Starting with <code>read_datetime()</code>, where we just use <code>strftime()</code> to format the current date/time in the desired format of Day, Date Month Hour:Minute. eg. Mon, 24 Sep 23:53.</p>
-<pre class="code-block">
-<span class="fc_13">#include</span> <span class="fc_5">&lt;sys/time.h&gt;</span>
+<pre><code class="language-c">
+#include &lt;sys/time.h&gt;
 
-...
+// ...
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> read_datetime() {
-	<span class="fc_7">time_t</span> rawtime;
-	<span class="fc_6">struct</span> tm *tminfo;
+static void read_datetime() {
+	time_t rawtime;
+	struct tm *tminfo;
 	time(&amp;rawtime);
 	tminfo = localtime(&amp;rawtime);
-	strftime(datetime_buf, <span class="fc_10">sizeof</span>(datetime_buf), <span class="fc_5">"%a, %d %b %H:%M"</span>, tminfo);
+	strftime(datetime_buf, sizeof(datetime_buf), "%a, %d %b %H:%M", tminfo);
 }
-</pre>
+</code></pre>
 <p>Next let's tackle another easy one - <code>read_battery()</code>. Here we first come across the formatting commands you can include within dzen2 input strings. We will use such formatting to colour the battery percentage reading based on the reading itself. The battery status (Charging/Discarging) can be read from <code>/sys/class/power_supply/BAT0/status</code> (Atleast on my system. The specific path might vary on yours), and the current capacity can be read from <code>/sys/class/power_supply/BAT0/capacity</code>. This knowledge leads us to a simple implementation.</p>
-<pre class="code-block">
-<span class="fc_6">static</span> <span class="fc_7">void</span> read_battery() {
-	<span class="fc_6">static</span> <span class="fc_7">char</span> status[<span class="fc_10">64</span>];
-	<span class="fc_7">unsigned</span> cap;
-	<span class="fc_7">FILE</span> *capfp, *statfp;
-	<span class="fc_3">if</span> (!(statfp = fopen(<span class="fc_5">"/sys/class/power_supply/BAT0/status"</span>, <span class="fc_5">"r"</span>))) {
-		perror(<span class="fc_5">"fopen()"</span>);
-		exit(-<span class="fc_10">1</span>);
+<pre><code class="language-c">
+static void read_battery() {
+	static char status[64];
+	unsigned cap;
+	FILE *capfp, *statfp;
+	if (!(statfp = fopen("/sys/class/power_supply/BAT0/status", "r"))) {
+		perror("fopen()");
+		exit(-1);
 	}
-	<span class="fc_3">if</span> (!(capfp = fopen(<span class="fc_5">"/sys/class/power_supply/BAT0/capacity"</span>, <span class="fc_5">"r"</span>))) {
-		perror(<span class="fc_5">"fopen()"</span>);
-		exit(-<span class="fc_10">1</span>);
+	if (!(capfp = fopen("/sys/class/power_supply/BAT0/capacity", "r"))) {
+		perror("fopen()");
+		exit(-1);
 	}
-	fgets(status, <span class="fc_10">sizeof</span>(status), statfp);
-	fscanf(capfp, <span class="fc_5">"<span class="fc_6">%u</span>"</span>, &amp;cap);
-	<span class="fc_3">if</span> (!strncmp(status, <span class="fc_5">"Charging"</span>, <span class="fc_10">8</span>)) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"<span class="fc_6">%u%%</span>"</span>, cap);
-	} <span class="fc_3">else if</span> (cap == <span class="fc_10">100</span>) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#22ff22)full^fg()"</span>);
-	} <span class="fc_3">else if</span> (cap &gt;= <span class="fc_10">90</span>) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#22ff22)<span class="fc_6">%u%%</span>^fg()"</span>, cap);
-	} <span class="fc_3">else if</span> (cap &gt;= <span class="fc_10">75</span>) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#88ff22)<span class="fc_6">%u%%</span>^fg()"</span>, cap);
-	} <span class="fc_3">else if</span> (cap &gt;= <span class="fc_10">45</span>) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#ffff22)<span class="fc_6">%u%%</span>^fg()"</span>, cap);
-	} <span class="fc_3">else if</span> (cap &gt;= <span class="fc_10">15</span>) {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#ff8844)<span class="fc_6">%u%%</span>^fg()"</span>, cap);
-	} <span class="fc_3">else</span> {
-		snprintf(battery_buf, <span class="fc_10">sizeof</span>(battery_buf), <span class="fc_5">"^fg(#ff1111)<span class="fc_6">%u%%</span>^fg()"</span>, cap);
+	fgets(status, sizeof(status), statfp);
+	fscanf(capfp, "%u", &amp;cap);
+	if (!strncmp(status, "Charging", 8)) {
+		snprintf(battery_buf, sizeof(battery_buf), "%u%%", cap);
+	} else if (cap == 100) {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#22ff22)full^fg()");
+	} else if (cap &gt;= 90) {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#22ff22)%u%%^fg()", cap);
+	} else if (cap &gt;= 75) {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#88ff22)%u%%^fg()", cap);
+	} else if (cap &gt;= 45) {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#ffff22)%u%%^fg()", cap);
+	} else if (cap &gt;= 15) {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#ff8844)%u%%^fg()", cap);
+	} else {
+		snprintf(battery_buf, sizeof(battery_buf), "^fg(#ff1111)%u%%^fg()", cap);
 	}
 	fclose(statfp);
 	fclose(capfp);
 }
-</pre>
+</code></pre>
 <p>We can read the kernel version with <code>uname</code>, the WiFi SSID with <code>nmcli</code> and the current volume with <code>amixer</code>, so let's fill those in. Also, notice how we need to escape out the backslash character in the <code>sed</code> command, in the <code>read_volume()</code> function.</p>
-<pre class="code-block">
-<span class="fc_13">#include</span> <span class="fc_5">&lt;string.h&gt;</span>
+<pre><code class="language-c">
+#include &lt;string.h&gt;
 
-...
+// ...
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> read_kernel() {
-	<span class="fc_7">size_t</span> len;
-	<span class="fc_7">FILE</span> *fp;
-	<span class="fc_3">if</span> (!(fp = popen(<span class="fc_5">"uname -r"</span>, <span class="fc_5">"r"</span>))) {
-		perror(<span class="fc_5">"popen()"</span>);
-		exit(-<span class="fc_10">1</span>);
+static void read_kernel() {
+	size_t len;
+	FILE *fp;
+	if (!(fp = popen("uname -r", "r"))) {
+		perror("popen()");
+		exit(-1);
 	}
-	fgets(kernel_buf, <span class="fc_10">sizeof</span>(kernel_buf), fp);
+	fgets(kernel_buf, sizeof(kernel_buf), fp);
 	pclose(fp);
 	len = strlen(kernel_buf);
-	<span class="fc_3">if</span> (kernel_buf[len - <span class="fc_10">1</span>] == <span class="fc_6">'\n'</span>) {
-		kernel_buf[len - <span class="fc_10">1</span>] = <span class="fc_6">'\0'</span>;
+	if (kernel_buf[len - 1] == '\n') {
+		kernel_buf[len - 1] = '\0';
 	}
 }
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> read_wifi() {
-	<span class="fc_7">FILE</span> *fp;
-	<span class="fc_7">size_t</span> len;
-	<span class="fc_3">if</span> (!(fp = popen(<span class="fc_5">"nmcli -t -f active,ssid dev wifi | egrep '^yes' | cut -d ':' -f 2"</span>, <span class="fc_5">"r"</span>))) {
-		perror(<span class="fc_5">"popen()"</span>);
-		exit(-<span class="fc_10">1</span>);
+static void read_wifi() {
+	FILE *fp;
+	size_t len;
+	if (!(fp = popen("nmcli -t -f active,ssid dev wifi | egrep '^yes' | cut -d ':' -f 2", "r"))) {
+		perror("popen()");
+		exit(-1);
 	}
-	<span class="fc_3">if</span> (!fgets(wifi_buf, <span class="fc_10">sizeof</span>(wifi_buf), fp) || wifi_buf[<span class="fc_10">0</span>] == <span class="fc_6">'\0'</span> || wifi_buf[<span class="fc_10">0</span>] == <span class="fc_10">':'</span>) {
-		snprintf(wifi_buf, <span class="fc_10">sizeof</span>(wifi_buf), <span class="fc_5">"- wifi down -"</span>);
-		<span class="fc_3">return</span>;
+	if (!fgets(wifi_buf, sizeof(wifi_buf), fp) || wifi_buf[0] == '\0' || wifi_buf[0] == ':') {
+		snprintf(wifi_buf, sizeof(wifi_buf), "- wifi down -");
+		return;
 	}
 	len = strlen(wifi_buf);
-	<span class="fc_3">if</span> (wifi_buf[len - <span class="fc_10">1</span>] == <span class="fc_6">'\n'</span>) {
-		wifi_buf[len - <span class="fc_10">1</span>] = <span class="fc_6">'\0'</span>;
+	if (wifi_buf[len - 1] == '\n') {
+		wifi_buf[len - 1] = '\0';
 	}
 	pclose(fp);
 }
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> read_volume() {
-	<span class="fc_7">char</span> stat[<span class="fc_10">8</span>];
-	<span class="fc_7">unsigned</span> val;
-	<span class="fc_7">FILE</span> *fp;
-	<span class="fc_3">if</span> (!(fp = popen(<span class="fc_5">"amixer get Master | sed -n 'N;s/^.*<span class="fc_6">\\</span>[<span class="fc_6">\\</span>([0-9]<span class="fc_6">\\</span>+<span class="fc_6">\\</span>).*<span class="fc_6">\\</span>[<span class="fc_6">\\</span>([a-z]<span class="fc_6">\\</span>+<span class="fc_6">\\</span>).*$/<span class="fc_6">\\</span>1 <span class="fc_6">\\</span>2/p'"</span>, <span class="fc_5">"r"</span>))) {
-		perror(<span class="fc_5">"popen()"</span>);
-		exit(-<span class="fc_10">1</span>);
+static void read_volume() {
+	char stat[8];
+	unsigned val;
+	FILE *fp;
+	if (!(fp = popen("amixer get Master | sed -n 'N;s/^.*\\[\\([0-9]\\+\\).*\\[\\([a-z]\\+\\).*$/\\1 \\2/p'", "r"))) {
+		perror("popen()");
+		exit(-1);
 	}
-	fscanf(fp, <span class="fc_5">"<span class="fc_6">%u %s</span>"</span>, &amp;val, stat);
+	fscanf(fp, "%u %s", &amp;val, stat);
 	pclose(fp);
-	<span class="fc_3">if</span> (strcmp(stat, <span class="fc_5">"on"</span>)) {
-		snprintf(volume_buf, <span class="fc_10">sizeof</span>(volume_buf), <span class="fc_5">"(mute) <span class="fc_6">%u%%</span>"</span>, val);
+	if (strcmp(stat, "on")) {
+		snprintf(volume_buf, sizeof(volume_buf), "(mute) %u%%", val);
 	} else {
-		snprintf(volume_buf, <span class="fc_10">sizeof</span>(volume_buf), <span class="fc_5">"<span class="fc_6">%u%%</span>"</span>, val);
+		snprintf(volume_buf, sizeof(volume_buf), "%u%%", val);
 	}
 }
-</pre>
+</code></pre>
 <p>There are a few problems with what we have so far, have you noticed? Basically, you don't necessarily need to poll the date/time, battery, or WiFi SSID every second. Nor the volume. In fact, checking the volume every second might cause delayed responses to volume change, as compared to a near-instantaneous response to the pressing of one of the volume buttons. We can do with with a signal handler. So, we setup a handler for the <code>SIGUSR1</code> signal, which triggers a volume update. Otherwise, the volume isn't read. Also, we arbitrarily set a loop counter for the WiFi, battery, and date/time. So let's rework our main loop somewhat.</p>
 <p><em>Note: In your system's keybindings, you'd have to add a command to send SIGUSR1 to this program. So, if your program is called </em><code>dzen2_ctrl</code><em>, you could add something like </em><code>pkill -SIGUSR1 -f dzen2_ctrl</code><em></em></p>
-<pre class="code-block">
-<span class="fc_13">#include</span> <span class="fc_5">&lt;signal.h&gt;</span>
+<pre><code class="language-c">
+#include &lt;signal.h&gt;
 
-...
+// ...
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> do_read_volume = <span class="fc_10">1</span>;
+static int do_read_volume = 1;
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> signal_handler(<span class="fc_7">int</span> signum) {
-	<span class="fc_5">if</span> (signum == <span class="fc_10">SIGUSR1</span>) {
-		do_read_volume = <span class="fc_10">1</span>;
+static void signal_handler(int signum) {
+	if (signum == SIGUSR1) {
+		do_read_volume = 1;
 	}
 }
 
-...
+// ...
 
-<span class="fc_7">int</span> main() {
-	<span class="fc_7">int</span> bat_count = <span class="fc_10">10</span>, dt_count = <span class="fc_10">5</span>, wifi_count = <span class="fc_10">5</span>, vol_changed = <span class="fc_10">0</span>;
-	...
-	signal(<span class="fc_10">SIGUSR1</span>, signal_handler);
+int main() {
+	int bat_count = 10, dt_count = 5, wifi_count = 5, vol_changed = 0;
+	// ...
+	signal(SIGUSR1, signal_handler);
 	read_kernel();
-	<span class="fc_3">while</span> (<span class="fc_10">1</span>) {
+	while (1) {
 		read_music();
-		<span class="fc_3">if</span> (do_read_volume) {
-			do_read_volume = <span class="fc_10">0</span>;
+		if (do_read_volume) {
+			do_read_volume = 0;
 			read_volume();
-			vol_changed = <span class="fc_10">1</span>;
+			vol_changed = 1;
 		}
-		<span class="fc_3">if</span> (bat_count == <span class="fc_10">10</span>) {
-			bat_count = <span class="fc_10">0</span>;
+		if (bat_count == 10) {
+			bat_count = 0;
 			read_battery();
 		}
-		<span class="fc_3">if</span> (dt_count == <span class="fc_10">5</span>) {
-			dt_count = <span class="fc_10">0</span>;
+		if (dt_count == 5) {
+			dt_count = 0;
 			read_datetime();
 		}
-		<span class="fc_3">if</span> (wifi_count == <span class="fc_10">5</span>) {
-			wifi_count = <span class="fc_10">0</span>;
+		if (wifi_count == 5) {
+			wifi_count = 0;
 			read_wifi();
 		}
-		<span class="fc_3">if</span> (vol_changed || bat_count == <span class="fc_10">0</span> || dt_count == <span class="fc_10">0</span> || wifi_count == <span class="fc_10">0</span>) {
-			vol_changed = <span class="fc_10">0</span>;
-			fprintf(fp, <span class="fc_5">"</span> <span class="fc_6">%s</span> | <span class="fc_6">%s</span> | <span class="fc_6">%s</span> | <span class="fc_6">%s</span> | <span class="fc_6">%s</span> | <span class="fc_6">%s</span> <span class="fc_5">"</span>, music_buf, volume_buf, wifi_buf, battery_buf, kernel_buf, datetime_buf);
+		if (vol_changed || bat_count == 0 || dt_count == 0 || wifi_count == 0) {
+			vol_changed = 0;
+			fprintf(fp, " %s | %s | %s | %s | %s | %s ", music_buf, volume_buf, wifi_buf, battery_buf, kernel_buf, datetime_buf);
 			fflush(fp);
 		}
-		sleep(<span class="fc_10">1</span>);
+		sleep(1);
 		bat_count++;
 		dt_count++;
 		wifi_count++;
 	}
-	<span class="fc_3">return</span> <span class="fc_10">0</span>;
+	return 0;
 }
-</pre>
+</code></pre>
 <p>Now finally, we come to music. I'm using MPD as my music player of choice, and it runs as a daemon, providing a TCP-based interface which uses a defined protocol for sending commands and requesting information. It also provides a mechanism to wait for an update in the music state. So how we're going to do this is - create a socket which connects to this daemon, waits for updates, and then reads the song, artist, and playing/paused state. If the daemon is not running, we decide it is "stopped".</p>
-<pre class="code-block">
-<span class="fc_13">#include</span> <span class="fc_5">&lt;fcntl.h&gt;</span>
-<span class="fc_13">#include</span> <span class="fc_5">&lt;sys/socket.h&gt;</span>
-<span class="fc_13">#include</span> <span class="fc_5">&lt;netdb.h&gt;</span>
+<pre><code class="language-c">
+#include &lt;fcntl.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netdb.h&gt;
 
-<span class="fc_13">#define MPD_PORT</span> <span class="fc_5">"6600"</span>
+#define MPD_PORT "6600"
 
-<span class="fc_13">#define MUSIC_STATUS_PLAY</span>  <span class="fc_10">0</span>
-<span class="fc_13">#define MUSIC_STATUS_PAUSE</span> <span class="fc_10">1</span>
-<span class="fc_13">#define MUSIC_STATUS_STOP</span>  <span class="fc_10">2</span>
-<span class="fc_13">#define MUSIC_STATUS_ERR  -</span><span class="fc_10">1</span>
+#define MUSIC_STATUS_PLAY  0
+#define MUSIC_STATUS_PAUSE 1
+#define MUSIC_STATUS_STOP  2
+#define MUSIC_STATUS_ERR  -1
 
-...
+// ...
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> get_socket() {
-	<span class="fc_7">int</span> ret, sock = -<span class="fc_10">1</span>;
-	<span class="fc_6">struct</span> addrinfo hints, *res, *p;
-	memset(&amp;hints, <span class="fc_10">0</span>, <span class="fc_10">sizeof</span>(hints));
+static int get_socket() {
+	int ret, sock = -1;
+	struct addrinfo hints, *res, *p;
+	memset(&amp;hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-	<span class="fc_3">if</span> ((ret = getaddrinfo(<span class="fc_5">"127.0.0.1"</span>, <span class="fc_10">MPD_PORT</span>, &amp;hints, &amp;res))) {
-		fprintf(<span class="fc_10">stderr</span>, <span class="fc_5">"getaddrinfo: <span class="fc_6">%s\n</span>"</span>, gai_strerror(ret));
-		exit(-<span class="fc_10">1</span>);
+	if ((ret = getaddrinfo("127.0.0.1", MPD_PORT, &amp;hints, &amp;res))) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
+		exit(-1);
 	}
-	<span class="fc_3">for</span> (p = res; p; p = p-&gt;ai_next) {
-		<span class="fc_3">if</span> ((sock = socket(p-&gt;ai_family, p-&gt;ai_socktype, p-&gt;ai_protocol)) &lt;= <span class="fc_10">0</span>) {
-			sock = -<span class="fc_10">1</span>;
-			<span class="fc_3">continue</span>;
+	for (p = res; p; p = p-&gt;ai_next) {
+		if ((sock = socket(p-&gt;ai_family, p-&gt;ai_socktype, p-&gt;ai_protocol)) &lt;= 0) {
+			sock = -1;
+			continue;
 		}
-		<span class="fc_3">while</span> (connect(sock, p-&gt;ai_addr, p-&gt;ai_addrlen) &lt; <span class="fc_10">0</span>) {
-			<span class="fc_3">if</span> (errno == <span class="fc_10">EAGAIN</span>) {
-				<span class="fc_3">continue</span>;
+		while (connect(sock, p-&gt;ai_addr, p-&gt;ai_addrlen) &lt; 0) {
+			if (errno == EAGAIN) {
+				continue;
 			}
 			close(sock);
-			sock = -<span class="fc_10">1</span>;
-			<span class="fc_3">break</span>;
+			sock = -1;
+			break;
 		}
-		<span class="fc_3">if</span> (sock &lt; <span class="fc_10">0</span>) {
-			<span class="fc_3">continue</span>;
+		if (sock &lt; 0) {
+			continue;
 		}
 		freeaddrinfo(res);
-		<span class="fc_3">return</span> sock;
+		return sock;
 	}
 	freeaddrinfo(res);
-	<span class="fc_3">return</span> sock;
+	return sock;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> do_read(<span class="fc_6">int</span> sock, <span class="fc_6">char</span> *buf, <span class="fc_6">int</span> len) {
-	<span class="fc_6">int</span> ret;
-	<span class="fc_3">while</span> ((ret = read(sock, buf, len)) &lt; <span class="fc_10">0</span>) {
-		<span class="fc_3">if</span> (errno == <span class="fc_10">EAGAIN</span>) {
-			<span class="fc_3">continue</span>;
+static int do_read(int sock, char *buf, int len) {
+	int ret;
+	while ((ret = read(sock, buf, len)) &lt; 0) {
+		if (errno == EAGAIN) {
+			continue;
 		}
-		perror(<span class="fc_5">"read()"</span>);
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+		perror("read()");
+		return -1;
 	}
-	<span class="fc_3">if</span> (ret == <span class="fc_10">0</span>) {
-		fprintf(<span class="fc_10">stderr</span>, <span class="fc_5">"Connection closed<span class="fc_6">'\0'</span>"</span>);
+	if (ret == 0) {
+		fprintf(stderr, "Connection closed'\0'");
 	}
-	buf[ret] = <span class="fc_6">'\0'</span>;
-	<span class="fc_3">return</span> ret;
+	buf[ret] = '\0';
+	return ret;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> do_write(<span class="fc_6">int</span> sock, <span class="fc_6">char</span> *buf, <span class="fc_6">int</span> len) {
-	<span class="fc_6">int</span> ret;
-	<span class="fc_3">while</span> ((ret = write(sock, buf, len)) &lt; <span class="fc_10">0</span>) {
-		<span class="fc_3">if</span> (errno == <span class="fc_10">EAGAIN</span>) {
-			<span class="fc_3">continue</span>;
+static int do_write(int sock, char *buf, int len) {
+	int ret;
+	while ((ret = write(sock, buf, len)) &lt; 0) {
+		if (errno == EAGAIN) {
+			continue;
 		}
-		perror(<span class="fc_5">"write()"</span>);
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+		perror("write()");
+		return -1;
 	}
-	<span class="fc_3">return</span> ret;
+	return ret;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> parse_cursong(<span class="fc_7">char</span> *buf, <span class="fc_7">char</span> **p_artist, <span class="fc_7">char</span> **p_song) {
-	<span class="fc_7">char</span> *artist, *song, *ptr;
-	<span class="fc_3">if</span> ((artist = strstr(buf, <span class="fc_5">"Artist: "</span>))) {
-		artist += <span class="fc_10">8</span>;
-	} <span class="fc_3">else</span> {
-		artist = <span class="fc_10">NULL</span>;
+static void parse_cursong(char *buf, char **p_artist, char **p_song) {
+	char *artist, *song, *ptr;
+	if ((artist = strstr(buf, "Artist: "))) {
+		artist += 8;
+	} else {
+		artist = NULL;
 	}
-	<span class="fc_3">if</span> ((song = strstr(buf, <span class="fc_5">"Title: "</span>))) {
-		song += <span class="fc_10">7</span>;
-	} <span class="fc_3">else if</span> ((song = strstr(buf, <span class="fc_5">"file: "</span>))) {
-		song += <span class="fc_10">6</span>;
-	} <span class="fc_3">else</span> {
-		fprintf(stderr, <span class="fc_5">"Error: Should not be asking for song here<span class="fc_6">\n</span>"</span>);
-		exit(-<span class="fc_10">1</span>);
+	if ((song = strstr(buf, "Title: "))) {
+		song += 7;
+	} else if ((song = strstr(buf, "file: "))) {
+		song += 6;
+	} else {
+		fprintf(stderr, "Error: Should not be asking for song here\n");
+		exit(-1);
 	}
-	<span class="fc_3">if</span> (artist) {
-		ptr = strchr(artist, <span class="fc_6">'\n'</span>);
-		*ptr = <span class="fc_6">'\0'</span>;
+	if (artist) {
+		ptr = strchr(artist, '\n');
+		*ptr = '\0';
 	}
-	ptr = strchr(song,  <span class="fc_6">'\n'</span>);
-	*ptr = <span class="fc_6">'\0'</span>;
+	ptr = strchr(song,  '\n');
+	*ptr = '\0';
 	*p_artist = artist;
 	*p_song = song;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> parse_state(<span class="fc_7">char</span> *buf) {
-	<span class="fc_7">char</span> *ptr;
-	<span class="fc_3">if</span> (!(buf = strstr(buf, <span class="fc_5">"<span class="fc_6">\n</span>state: "</span>))) {
-		<span class="fc_3">return</span> MUSIC_STATUS_ERR;
+static int parse_state(char *buf) {
+	char *ptr;
+	if (!(buf = strstr(buf, "\nstate: "))) {
+		return MUSIC_STATUS_ERR;
 	}
-	buf += <span class="fc_10">8</span>;
-	<span class="fc_3">if</span> (!(ptr = strchr(buf, <span class="fc_6">'\n'</span>))) {
-		<span class="fc_3">return</span> MUSIC_STATUS_ERR;
+	buf += 8;
+	if (!(ptr = strchr(buf, '\n'))) {
+		return MUSIC_STATUS_ERR;
 	}
-	*ptr = <span class="fc_6">'\0'</span>;
-	<span class="fc_3">if</span> (!strcmp(buf, <span class="fc_5">"play"</span>)) {
-		<span class="fc_3">return</span> MUSIC_STATUS_PLAY;
+	*ptr = '\0';
+	if (!strcmp(buf, "play")) {
+		return MUSIC_STATUS_PLAY;
 	}
-	<span class="fc_3">if</span> (!(strcmp(buf, <span class="fc_5">"pause"</span>))) {
-		<span class="fc_3">return</span> MUSIC_STATUS_PAUSE;
+	if (!(strcmp(buf, "pause"))) {
+		return MUSIC_STATUS_PAUSE;
 	}
-	<span class="fc_3">if</span> (!(strcmp(buf, <span class="fc_5">"stop"</span>))) {
-		<span class="fc_3">return</span> MUSIC_STATUS_STOP;
+	if (!(strcmp(buf, "stop"))) {
+		return MUSIC_STATUS_STOP;
 	}
-	<span class="fc_3">return</span> MUSIC_STATUS_ERR;
+	return MUSIC_STATUS_ERR;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">void</span> fini_music(<span class="fc_7">int</span> sock) {
+static void fini_music(int sock) {
 	close(sock);
 }
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> read_music(<span class="fc_7">int</span> sock) {
-	<span class="fc_7">int</span> status;
-	<span class="fc_7">char</span> buf[<span class="fc_10">1024</span>], *artist, *song;
-	<span class="fc_3">if</span> (do_write(sock, <span class="fc_5">"status<span class="fc_6">\n</span>"</span>, <span class="fc_10">7</span>) &lt; 0) {
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+static int read_music(int sock) {
+	int status;
+	char buf[1024], *artist, *song;
+	if (do_write(sock, "status\n", 7) &lt; 0) {
+		return -1;
 	}
-	<span class="fc_3">if</span> (do_read(sock, buf, <span class="fc_10">sizeof</span>(buf)) &lt;= <span class="fc_10">0</span>) {
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+	if (do_read(sock, buf, sizeof(buf)) &lt;= 0) {
+		return -1;
 	}
 	status = parse_status(buf);
-	<span class="fc_3">switch</span> (status) {
-	<span class="fc_3">case</span> MUSIC_STATUS_ERR:
-		snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"- error -"</span>);
-		<span class="fc_3">break</span>;
-	<span class="fc_3">case</span> MUSIC_STATUS_STOP:
-		snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"- stopped -"</span>);
-		<span class="fc_3">break</span>;
-	<span class="fc_3">case</span> MUSIC_STATUS_PLAY:
-	<span class="fc_3">case</span> MUSIC_STATUS_PAUSE:
-		<span class="fc_3">if</span> (do_write(sock, <span class="fc_5">"currentsong<span class="fc_6">\n</span>"</span>, <span class="fc_10">12</span>) &lt; 0) {
-			<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+	switch (status) {
+	case MUSIC_STATUS_ERR:
+		snprintf(music_buf, sizeof(music_buf), "- error -");
+		break;
+	case MUSIC_STATUS_STOP:
+		snprintf(music_buf, sizeof(music_buf), "- stopped -");
+		break;
+	case MUSIC_STATUS_PLAY:
+	case MUSIC_STATUS_PAUSE:
+		if (do_write(sock, "currentsong\n", 12) &lt; 0) {
+			return -1;
 		}
-		<span class="fc_3">if</span> (do_read(sock, buf, <span class="fc_10">sizeof</span>(buf)) &lt;= <span class="fc_10">0</span>) {
-			<span class="fc_3">return</span>-<span class="fc_10">1</span>;
+		if (do_read(sock, buf, sizeof(buf)) &lt;= 0) {
+			return -1;
 		}
 		parse_cursong(buf, &amp;artist,  &amp;song);
-		<span class="fc_3">if</span> (status == MUSIC_STATUS_PAUSE) {
-			<span class="fc_3">if</span> (artist) {
-				snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"(pause) %s - %s"</span>, artist, song);
-			} <span class="fc_3">else</span> {
-				snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"(pause) %s"</span>, song);
+		if (status == MUSIC_STATUS_PAUSE) {
+			if (artist) {
+				snprintf(music_buf, sizeof(music_buf), "(pause) %s - %s", artist, song);
+			} else {
+				snprintf(music_buf, sizeof(music_buf), "(pause) %s", song);
 			}
-		} <span class="fc_3">else</span> {
-			<span class="fc_3">if</span> (artist) {
-				snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"%s - %s"</span>, artist, song);
-			} <span class="fc_3">else</span> {
-				snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"%s"</span>, song);
+		} else {
+			if (artist) {
+				snprintf(music_buf, (music_buf), "%s - %s", artist, song);
+			} else {
+				snprintf(music_buf, sizeof(music_buf), "%s", song);
 			}
 		}
 	}
-	<span class="fc_1">// Queue next status update notification</span>
-	<span class="fc_3">if</span> (do_write(sock, <span class="fc_5">"idle player<span class="fc_6">\n</span>"</span>, <span class="fc_10">12</span>) &lt; 0) {
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+	// Queue next status update notification
+	if (do_write(sock, "idle player\n", 12) &lt; 0) {
+		return -1;
 	}
-	<span class="fc_3">return</span> <span class="fc_10">0</span>;
+	return 0;
 }
 
-<span class="fc_6">static</span> <span class="fc_7">int</span> init_music() {
-	<span class="fc_7">int</span> sock;
-	<span class="fc_7">char</span> buf[<span class="fc_10">1024</span>];
-	<span class="fc_3">if</span> ((sock = get_socket()) &lt; <span class="fc_10">0</span>) {
-		fprintf(<span class="fc_10">stderr</span>, <span class="fc_5">"Error: Could not connect to mpd<span class="fc_6">\n</span>"</span>);
-		<span class="fc_3">return</span>-<span class="fc_10">1</span>;
+static int init_music() {
+	int sock;
+	char buf[1024];
+	if ((sock = get_socket()) &lt; 0) {
+		fprintf(stderr, "Error: Could not connect to mpd\n");
+		return -1;
 	}
-	<span class="fc_1">// Read initial message</span>
-	<span class="fc_3">if</span> (do_read(sock, buf, <span class="fc_10">sizeof</span>(buf)) &lt;= <span class="fc_10">0</span> || strncmp(buf, <span class="fc_5">"OK MPD"</span>, <span class="fc_10">6</span>)) {
-		fprintf(<span class="fc_10">stderr</span>, <span class="fc_5">"Error: Service on port 6600 is not mpd<span class="fc_6">\n</span>"</span>);
-		<span class="fc_3">return</span>-<span class="fc_10">1</span>;
+	// Read initial message
+	if (do_read(sock, buf, sizeof(buf)) &lt;= 0 || strncmp(buf, "OK MPD", 6)) {
+		fprintf(stderr, "Error: Service on port 6600 is not mpd\n");
+		return -1;
 	}
-	<span class="fc_1">// Get song and status now</span>
-	<span class="fc_3">if</span> (read_music(sock) &lt; <span class="fc_10">0</span>) {
+	// Get song and status now
+	if (read_music(sock) &lt; 0) {
 		fini_music(sock);
-		<span class="fc_3">return</span> -<span class="fc_10">1</span>;
+		return -1;
 	}
-	<span class="fc_3">return</span> sock;
+	return sock;
 }
-</pre>
+</code></pre>
 <p>And finally, we need to make a few changed to our <code>main</code> function, so that the main loop waits on <code>select()</code> on the music socket, with a timeout of 1 second, instead of just sleeping. Note that the current code doesn't support MPD starting <em>after</em> dzen2, so if MPD is killed while this program is running, it won't be able to detect it coming back to life again. Unless of course this program is restarted.</p>
-<pre class="code-block">
-<span class="fc_13">#include</span> <span class="fc_5">&lt;sys/select.h&gt;</span>
+<pre><code class="language-c">
+#include &lt;sys/select.h&gt;
 
-...
+// ...
 
-<span class="fc_7">int</span> main() {
+int main() {
 	fd_set rfds;
-	<span class="fc_7">int</span> music_fd;
-	<span class="fc_6">struct</span> timeval tv;
-	tv.tv_sec = <span class="fc_10">1</span>;
-	tv_tv_nsec = <span class="fc_10">0</span>;
-	...
-	<span class="fc_3">if</span> ((music_fd = init_music()) &lt; <span class="fc_10">0</span>) {
-		snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"- no player -"</span>);
+	int music_fd;
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv_tv_nsec = 0;
+	// ...
+	if ((music_fd = init_music()) &lt; 0) {
+		snprintf(music_buf, sizeof(music_buf), "- no player -");
 	}
-	<span class="fc_3">while</span> (<span class="fc_10">1</span>) {
-		...
-		<span class="fc_3">if</span> (music_fd &gt; <span class="fc_10">0</span>) {
+	while (1) {
+		// ...
+		if (music_fd &gt; 0) {
 			FD_ZERO(&amp;rfds);
 			FD_SET(music_fd, &amp;rfds);
-			<span class="fc_3">while</span> (ret = select(&amp;rfds, <span class="fc_10">NULL</span>, <span class="fc_10">NULL</span>, &amp;tv) &lt; <span class="fc_10">0</span>) {
-				<span class="fc_3">if</span> (errno == <span class="fc_10">EAGAIN</span>) {
-					<span class="fc_3">continue</span>;
+			while (ret = select(&amp;rfds, NULL, NULL, &amp;tv) &lt; 0) {
+				if (errno == EAGAIN) {
+					continue;
 				}
 				fini_music(music_fd);
-				music_fd = -<span class="fc_10">1</span>;
-				<span class="fc_3">break</span>;
+				music_fd = -1;
+				break;
 			}
-			<span class="fc_3">if</span> (music_fd &gt; <span class="fc_10">0</span>) {
-				<span class="fc_3">if</span> (read_music() &lt; <span class="fc_10">0</span>) {
+			if (music_fd &gt; 0) {
+				if (read_music() &lt; 0) {
 					fini_music(music_fd);
-					music_fd = -<span class="fc_10">1</span>;
+					music_fd = -1;
 				}
 			}
-			<span class="fc_3">if</span> </span>(music_fd &lt; <span class="fc_10">0</span>) {
-				snprintf(music_buf, <span class="fc_10">sizeof</span>(music_buf), <span class="fc_5">"- no player -"</span>);
+			if (music_fd &lt; 0) {
+				snprintf(music_buf, sizeof(music_buf), "- no player -");
 			}
-		} <span class="fc_3">else</span> {
-			sleep(<span class="fc_10">1</span>);
+		} else {
+			sleep(1);
 		}
 	}
 	fini_music();
-	<span class="fc_3">return</span> <span class="fc_10">0</span>;
+	return 0;
 }
-</pre>
+
 <p>And there we have it, a functional status bar. You could go ahead an work on things like icons or on-click popups which dzen2 supports. This post was just intended to give you an idea of what's possible.</p>
 
