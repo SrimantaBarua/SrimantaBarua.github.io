@@ -57,6 +57,11 @@ a:hover {
   margin-right: 1em;
 }
 
+.navbar-elem:hover {
+  cursor: pointer;
+  color: #AAAAAA;
+}
+
 #content {
   text-align: justify;
   line-height: 1.5em;

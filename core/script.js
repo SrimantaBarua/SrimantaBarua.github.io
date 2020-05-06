@@ -72,7 +72,6 @@ function display_blogs() {
             elem_html += datefmt + "</p></div></div>";
         }
         // Insert into DOM
-        place_to_insert.children[1].remove();
         place_to_insert.innerHTML = elem_html;
     }
 }
@@ -140,7 +139,6 @@ function display_projects() {
             elem_html += "</p></div></div>";
         }
         // Insert into DOM
-        place_to_insert.children[1].remove();
         place_to_insert.innerHTML = elem_html;
     }
 }
