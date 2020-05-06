@@ -1,4 +1,6 @@
-<p>How goes GSoC? Well.. the gdbserver is at the point where it can have a basic conversation with the r2 client. Not really much debugging going on, just reading register and memory values. Which is enough to let r2 work its disassemly magic. Something like this -</p>
+<p>How goes GSoC? Well.. the gdbserver is at the point where it can have a basic conversation with
+the r2 client. Not really much debugging going on, just reading register and memory values. Which is
+enough to let r2 work its disassemly magic. Something like this -</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_4">r2</span> -
 <span class="fc_6">[0x00000000]></span> =g 8000 /bin/ls
@@ -21,6 +23,30 @@ gdbserver started on port: 8000, file: /bin/ls
             <span class="fc_4">0x7f728445fd91</span>      <span class="fc_6">5a</span>              <span class="fc_11">pop</span> <span class="fc_13">rdx</span>
 <span class="fc_6">[0x7f728445fd80]></span>
 </pre>
-<p>Off the bat, a few really obvious problems exist. Analysis commands like <code>aa</code> are really slow. And an obvious solution to this problem exists too - caching I/O to prevent redundant memory reads. This problem becomes apparent when you look at a PCAP of an r2 remote debugging session.. multiple reads of the same area of the target's memory. The key observation here is that values in memory are not going to change when the target is not running, or has stopped at a breakpoint. So once memory is read from a particular location, it can be cached in a buffer inside the client. This buffer can then be invalidated once the target runs. Or there could be finer caching mechanisms put into place... There was an attempt at this some time in the past, and the remnants of that attempt can be seen in <a href="https://github.com/radare/radare2/blob/master/libr/io/p/io_gdb.c#L51"> the GDB io plugin</a>. Anyway, this is one of the things I'll be working on during GSoC. Not right away though. Because I have more pressing challenges to overcome.</p>
-<p>We can't yet talk to GDB. Not yet. Of course, we don't yet handle all the packets defined by the GDB remote protocol. And increasing the number that we <em>do</em> handle is what I'm working on right now. Though I'm being slowed down by the fact that the official GDB remote protocol documentation is not really complete, and nor are there many resources online discussing this. Or maybe I'm not looking in the right places. Well, no worries. I'm currently spending time going through PCAPs of debugging sessions of GDB with gdbserver, r2, Qemu, and Bochs, to figure out how the different packets work. The GDB source code helps a bit too, especially when you find things that even <em>they</em> have as partially implemented, <em>TODO</em> ideas. Plus archives of conversations like <a href="https://www.sourceware.org/ml/gdb/2009-02/msg00100.html">this one</a> about how GDB usually ignores error codes, which I found after quite some time spent hunting down the significance of said error codes. Progress is slow, but this is only for the initial few days, since I've already figured out stuff about packets whose documentation I haven't been able to find.</p>
-<p>And you might not believe this, given the tone of the last paragraph, but I'm having quite a lot of fun.</p>
+<p>Off the bat, a few really obvious problems exist. Analysis commands like <code
+class="custom-inline-code">aa</code> are really slow. And an obvious solution to this problem exists
+too - caching I/O to prevent redundant memory reads. This problem becomes apparent when you look at
+a PCAP of an r2 remote debugging session.. multiple reads of the same area of the target's memory.
+The key observation here is that values in memory are not going to change when the target is not
+running, or has stopped at a breakpoint. So once memory is read from a particular location, it can
+be cached in a buffer inside the client. This buffer can then be invalidated once the target runs.
+Or there could be finer caching mechanisms put into place... There was an attempt at this some time
+in the past, and the remnants of that attempt can be seen in <a
+href="https://github.com/radare/radare2/blob/master/libr/io/p/io_gdb.c#L51"> the GDB io plugin</a>.
+Anyway, this is one of the things I'll be working on during GSoC. Not right away though. Because I
+have more pressing challenges to overcome.</p>
+<p>We can't yet talk to GDB. Not yet. Of course, we don't yet handle all the packets defined by the
+GDB remote protocol. And increasing the number that we <em>do</em> handle is what I'm working on
+right now. Though I'm being slowed down by the fact that the official GDB remote protocol
+documentation is not really complete, and nor are there many resources online discussing this. Or
+maybe I'm not looking in the right places. Well, no worries. I'm currently spending time going
+through PCAPs of debugging sessions of GDB with gdbserver, r2, Qemu, and Bochs, to figure out how
+the different packets work. The GDB source code helps a bit too, especially when you find things
+that even <em>they</em> have as partially implemented, <em>TODO</em> ideas. Plus archives of
+conversations like <a href="https://www.sourceware.org/ml/gdb/2009-02/msg00100.html">this one</a>
+about how GDB usually ignores error codes, which I found after quite some time spent hunting down
+the significance of said error codes. Progress is slow, but this is only for the initial few days,
+since I've already figured out stuff about packets whose documentation I haven't been able to
+find.</p>
+<p>And you might not believe this, given the tone of the last paragraph, but I'm having quite a lot
+of fun.</p>

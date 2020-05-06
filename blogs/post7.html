@@ -1,4 +1,8 @@
-<p>To quote a person on the radare2 chat, <em>"Why does r2 gdb read registers so damn often?"</em> The answer lies in the lack of register caching. r2 needs to verify register values at several points, and it has no way to know if they have changed. Reading registers on a local system is fairly painless. But transmitting something like the entire arm register set over a serial connection multiple times for a single mem read.. seems like overkill.</p>
+<p>To quote a person on the radare2 chat, <em>"Why does r2 gdb read registers so damn often?"</em>
+The answer lies in the lack of register caching. r2 needs to verify register values at several
+points, and it has no way to know if they have changed. Reading registers on a local system is
+fairly painless. But transmitting something like the entire arm register set over a serial
+connection multiple times for a single mem read.. seems like overkill.</p>
 <pre class="custom-code-block">
 getpkt ("g");  [no ack sent]
 putpkt ("$0*}0*+20eaf*"7f0*}0*A9dddf7ff7f0*"020* 330*"2b0*}0*}0* 7f030*(f* 0*}0*}0*}0*}0*}0*c801f0* 3b0*J#7a"); [noack mode]
@@ -9,10 +13,25 @@ getpkt ("m00007ffff7dd9d00,100");  [no ack sent]
 getpkt ("g");  [no ack sent]
 putpkt ("$0*}0*+20eaf*"7f0*}0*A9dddf7ff7f0*"020* 330*"2b0*}0*}0* 7f030*(f* 0*}0*}0*}0*}0*}0*c801f0* 3b0*J#7a"); [noack mode]
 </pre>
-<p>The <code>g</code> packet asks the gdbserver to read registers. And as you can see, multiple reg-read requests are sent just for a single mem-read. This is for a process that is stopped, so reg values aren't changing. This is a major performance bottleneck (even basic analysis with <code>aa</code> takes around 10 minutes on a moderate-sized binary, even on my local machine).</p>
-<p><em>By the way, notice the </em><code>[no ack sent]</code><em>? That's because I added the no-ack mode feature to r2 gdb, again cutting out a major performance bottleneck, with redundant acks on a robust channel like TCP.</em></p>
-<p>So where does the caching logic go? Right now, I've implemented it in the gdb-specific code in <code>shlr/gdb</code>. The reg cache remains valid after a reg-read, till the next reg-write or step/continue command. Reg caching is fairly straightforward, since you only need a single fixed-size buffer. Memory caching is more involved since you have to employ algorithms to keep track of multiple zones that are being accessed in the same space of time (my initial analysis suggests caching around 4 zones at a time should be the most beneficial.)</p>
-<p>Anyway, the reg caching is now done, and the performance gains are quite noticeable. pancake also asked me to implement a command which uses the IO system to invalidate the reg cache by hand. Initially I had trouble figuring out where the IO system commands are. Then I found that I was using <code>!=</code> instead of <code>=!</code>. So at the end of the day, the gdb IO plugin has a new command, and looks like this -</p>
+<p>The <code class="custom-inline-code">g</code> packet asks the gdbserver to read registers. And as
+you can see, multiple reg-read requests are sent just for a single mem-read. This is for a process
+that is stopped, so reg values aren't changing. This is a major performance bottleneck (even basic
+analysis with <code class="custom-inline-code">aa</code> takes around 10 minutes on a moderate-sized
+binary, even on my local machine).</p>
+<p><em>By the way, notice the </em><code class="custom-inline-code">[no ack sent]</code><em>? That's
+because I added the no-ack mode feature to r2 gdb, again cutting out a major performance bottleneck,
+with redundant acks on a robust channel like TCP.</em></p>
+<p>So where does the caching logic go? Right now, I've implemented it in the gdb-specific code in
+<code class="custom-inline-code">shlr/gdb</code>. The reg cache remains valid after a reg-read, till
+the next reg-write or step/continue command. Reg caching is fairly straightforward, since you only
+need a single fixed-size buffer. Memory caching is more involved since you have to employ algorithms
+to keep track of multiple zones that are being accessed in the same space of time (my initial
+analysis suggests caching around 4 zones at a time should be the most beneficial.)</p>
+<p>Anyway, the reg caching is now done, and the performance gains are quite noticeable. pancake also
+asked me to implement a command which uses the IO system to invalidate the reg cache by hand.
+Initially I had trouble figuring out where the IO system commands are. Then I found that I was using
+<code class="custom-inline-code">!=</code> instead of <code class="custom-inline-code">=!</code>. So
+at the end of the day, the gdb IO plugin has a new command, and looks like this -</p>
 <pre class="custom-code-block">
 <span class="fc_6">[0x7ffff7dd9d00]></span> =!
 Usage: =!cmd args

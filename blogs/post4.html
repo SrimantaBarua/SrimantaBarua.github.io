@@ -1,9 +1,17 @@
-<p>OS-Devs working on hobby projects will probably all know about using GDB to debug their OS, by starting <a href="www.qemu.org">Qemu</a> in the gdbserver mode. In this mode, Qemu halts execution at the beginning of its BIOS code and listens for a connection from a GDB client on port 1234. To those who don't know of this, you can do this by starting Qemu with the -s and -S options. For example, I'd start it as</p>
+<p>OS-Devs working on hobby projects will probably all know about using GDB to debug their OS, by
+starting <a href="www.qemu.org">Qemu</a> in the gdbserver mode. In this mode, Qemu halts execution
+at the beginning of its BIOS code and listens for a connection from a GDB client on port 1234. To
+those who don't know of this, you can do this by starting Qemu with the -s and -S options. For
+example, I'd start it as</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_4">qemu-system-x86_64</span> -s -S os.iso
 </pre>
-<p>Well this is all cool, and GDB works well with this. (There's a slight problem with debugging 64-bit kernels, a <em>Remote 'g' packet reply is too long:</em> error, which can be solved with <a href="http://wiki.osdev.org/QEMU_and_GDB_in_long_mode">a few cool hacks.)</a> So what's new?</p>
-<p>Well, for one, radare2 can now be used as a GDB client for this use case. Consider this session, where <code>0x101000</code> is the address of the entry point of the kernel (which a simple <code>readelf</code> can tell us).</p>
+<p>Well this is all cool, and GDB works well with this. (There's a slight problem with debugging
+64-bit kernels, a <em>Remote 'g' packet reply is too long:</em> error, which can be solved with
+<a href="http://wiki.osdev.org/QEMU_and_GDB_in_long_mode">a few cool hacks.)</a> So what's new?</p>
+<p>Well, for one, radare2 can now be used as a GDB client for this use case. Consider this session,
+where <code class="custom-inline-code">0x101000</code> is the address of the entry point of the
+kernel (which a simple <code class="custom-inline-code">readelf</code> can tell us).</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_4">r2</span> -e dbg.bpinmaps=false -d gdb://localhost:1234
 = attach 6 6
@@ -29,4 +37,11 @@ got signal...
             <span class="fc_4">0x00101011</span>      e8<span class="fc_6">47</span><span class="fc_4">000000</span>      <span class="fc_5">call 0x10105d</span>
 <span class="fc_6">[0x00101000]></span>
 </pre>
-<p>This is another reason I started working on r2's GDB code, by the way. I'm working on my own little hobby kernel, and it would be awesome if I could use r2 to debug it. There are still a few kinks to be ironed out though. Analysis doesn't work as expected (Looks like an issue with register sizes, from my initial digging around. And yeah, I'm working on it.) Also, there's an issue with stepping at some points. This seems to be an assumption on the client's part about instructions that the Qemu stub supports, (since the stub itself provides no information other than its supported PacketSize). If this initial diagnosis turns out to be correct, the solution could be to fall back to legacy commands if modern ones are not supported.</p>
+<p>This is another reason I started working on r2's GDB code, by the way. I'm working on my own
+little hobby kernel, and it would be awesome if I could use r2 to debug it. There are still a few
+kinks to be ironed out though. Analysis doesn't work as expected (Looks like an issue with register
+sizes, from my initial digging around. And yeah, I'm working on it.) Also, there's an issue with
+stepping at some points. This seems to be an assumption on the client's part about instructions that
+the Qemu stub supports, (since the stub itself provides no information other than its supported
+PacketSize). If this initial diagnosis turns out to be correct, the solution could be to fall back
+to legacy commands if modern ones are not supported.</p>

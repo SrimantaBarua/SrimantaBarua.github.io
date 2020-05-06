@@ -1,5 +1,7 @@
 <p><a href="https://github.com/minos-org/dzen2">dzen2</a> is a fork of <a href="https://github.com/robm/dzen">dzen</a>, which is a <em>general purpose messaging, notification and menuing program for X11.</em> What most people use it for, however, is to create cool-looking and highly functional statusbars/docks. (Just look at <a href="https://imgur.com/bZegioR">earsplit's desktop</a> to get an idea).</p>
-<p>How you go about doing this, is you craft the content of the status line, and pipe it into dzen2. Let's try a sample "Hello world" to demonstrate. I'll periodically write the output of <code>date</code>, with a 1 second sleep, to dzen2.</p>
+<p>How you go about doing this, is you craft the content of the status line, and pipe it into dzen2.
+Let's try a sample "Hello world" to demonstrate. I'll periodically write the output of <code
+  class="custom-inline-code">date</code>, with a 1 second sleep, to dzen2.</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_6">while</span> <span class="fc_4">:</span>; <span class="fc_6">do</span> <span class="fc_4">date</span>; <span class="fc_4">sleep</span> 1; <span class="fc_6">done</span> | <span class="fc_4">dzen2</span>
 </pre>
@@ -59,7 +61,10 @@ int main() {
 	return 0;
 }
 </code></pre>
-<p>Now we just need to fill in those functions, right? Well.. not so simple. Okay, some of them <em>are</em> pretty straightforward. Let's fill in the functions one by one. Starting with <code>read_datetime()</code>, where we just use <code>strftime()</code> to format the current date/time in the desired format of Day, Date Month Hour:Minute. eg. Mon, 24 Sep 23:53.</p>
+<p>Now we just need to fill in those functions, right? Well.. not so simple. Okay, some of them
+<em>are</em> pretty straightforward. Let's fill in the functions one by one. Starting with <code
+  class="custom-inline-code">read_datetime()</code>, where we just use <code
+  class="custom-inline-code">strftime()</code> to format the current date/time in the desired format of Day, Date Month Hour:Minute. eg. Mon, 24 Sep 23:53.</p>
 <pre><code class="language-c">
 #include &lt;sys/time.h&gt;
 
@@ -73,7 +78,13 @@ static void read_datetime() {
 	strftime(datetime_buf, sizeof(datetime_buf), "%a, %d %b %H:%M", tminfo);
 }
 </code></pre>
-<p>Next let's tackle another easy one - <code>read_battery()</code>. Here we first come across the formatting commands you can include within dzen2 input strings. We will use such formatting to colour the battery percentage reading based on the reading itself. The battery status (Charging/Discarging) can be read from <code>/sys/class/power_supply/BAT0/status</code> (Atleast on my system. The specific path might vary on yours), and the current capacity can be read from <code>/sys/class/power_supply/BAT0/capacity</code>. This knowledge leads us to a simple implementation.</p>
+<p>Next let's tackle another easy one - <code class="custom-inline-code">read_battery()</code>. Here
+we first come across the formatting commands you can include within dzen2 input strings. We will use
+such formatting to colour the battery percentage reading based on the reading itself. The battery
+status (Charging/Discarging) can be read from <code
+  class="custom-inline-code">/sys/class/power_supply/BAT0/status</code> (Atleast on my system. The
+specific path might vary on yours), and the current capacity can be read from <code
+                                                                                class="custom-inline-code">/sys/class/power_supply/BAT0/capacity</code>. This knowledge leads us to a simple implementation.</p>
 <pre><code class="language-c">
 static void read_battery() {
 	static char status[64];
@@ -108,7 +119,11 @@ static void read_battery() {
 	fclose(capfp);
 }
 </code></pre>
-<p>We can read the kernel version with <code>uname</code>, the WiFi SSID with <code>nmcli</code> and the current volume with <code>amixer</code>, so let's fill those in. Also, notice how we need to escape out the backslash character in the <code>sed</code> command, in the <code>read_volume()</code> function.</p>
+<p>We can read the kernel version with <code class="custom-inline-code">uname</code>, the WiFi SSID
+with <code class="custom-inline-code">nmcli</code> and the current volume with <code
+  class="custom-inline-code">amixer</code>, so let's fill those in. Also, notice how we need to
+escape out the backslash character in the <code class="custom-inline-code">sed</code> command, in
+the <code class="custom-inline-code">read_volume()</code> function.</p>
 <pre><code class="language-c">
 #include &lt;string.h&gt;
 
@@ -164,8 +179,15 @@ static void read_volume() {
 	}
 }
 </code></pre>
-<p>There are a few problems with what we have so far, have you noticed? Basically, you don't necessarily need to poll the date/time, battery, or WiFi SSID every second. Nor the volume. In fact, checking the volume every second might cause delayed responses to volume change, as compared to a near-instantaneous response to the pressing of one of the volume buttons. We can do with with a signal handler. So, we setup a handler for the <code>SIGUSR1</code> signal, which triggers a volume update. Otherwise, the volume isn't read. Also, we arbitrarily set a loop counter for the WiFi, battery, and date/time. So let's rework our main loop somewhat.</p>
-<p><em>Note: In your system's keybindings, you'd have to add a command to send SIGUSR1 to this program. So, if your program is called </em><code>dzen2_ctrl</code><em>, you could add something like </em><code>pkill -SIGUSR1 -f dzen2_ctrl</code><em></em></p>
+<p>There are a few problems with what we have so far, have you noticed? Basically, you don't
+necessarily need to poll the date/time, battery, or WiFi SSID every second. Nor the volume. In fact,
+checking the volume every second might cause delayed responses to volume change, as compared to a
+near-instantaneous response to the pressing of one of the volume buttons. We can do with with a
+signal handler. So, we setup a handler for the <code class="custom-inline-code">SIGUSR1</code> signal, which triggers a volume update. Otherwise, the volume isn't read. Also, we arbitrarily set a loop counter for the WiFi, battery, and date/time. So let's rework our main loop somewhat.</p>
+<p><em>Note: In your system's keybindings, you'd have to add a command to send SIGUSR1 to this
+  program. So, if your program is called </em><code
+  class="custom-inline-code">dzen2_ctrl</code><em>, you could add something like </em><code
+  class="custom-inline-code">pkill -SIGUSR1 -f dzen2_ctrl</code><em></em></p>
 <pre><code class="language-c">
 #include &lt;signal.h&gt;
 
@@ -413,7 +435,8 @@ static int init_music() {
 	return sock;
 }
 </code></pre>
-<p>And finally, we need to make a few changed to our <code>main</code> function, so that the main loop waits on <code>select()</code> on the music socket, with a timeout of 1 second, instead of just sleeping. Note that the current code doesn't support MPD starting <em>after</em> dzen2, so if MPD is killed while this program is running, it won't be able to detect it coming back to life again. Unless of course this program is restarted.</p>
+<p>And finally, we need to make a few changed to our <code class="custom-inline-code">main</code>
+function, so that the main loop waits on <code class="custom-inline-code">select()</code> on the music socket, with a timeout of 1 second, instead of just sleeping. Note that the current code doesn't support MPD starting <em>after</em> dzen2, so if MPD is killed while this program is running, it won't be able to detect it coming back to life again. Unless of course this program is restarted.</p>
 <pre><code class="language-c">
 #include &lt;sys/select.h&gt;
 

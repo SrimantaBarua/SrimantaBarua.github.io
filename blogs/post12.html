@@ -1,4 +1,6 @@
-<p>Aside from the most hardcore, I guess everyone uses terminals with some measure of utf-8 support. So why not take advantage of that? radare2 sure does. So this is how radare2 reflines (lines pointing to code jumps etc) look out of the box -</p>
+<p>Aside from the most hardcore, I guess everyone uses terminals with some measure of utf-8 support.
+So why not take advantage of that? radare2 sure does. So this is how radare2 reflines (lines
+pointing to code jumps etc) look out of the box -</p>
 <pre class="custom-code-block">
 <span class="fc_6">[0x000036de]></span> pd 7
   <span class="fc_12">,=<</span> <span class="fc_4">0x000036de</span>      0f84c50d<span class="fc_4">0000   je 0x44a9</span>
@@ -9,7 +11,9 @@
 <span class="fc_12">|||</span>   <span class="fc_4">0x000036f2</span>      <span class="fc_2">ff</span>1588c5<span class="fc_6">21</span><span class="fc_4">00</span>   <span class="fc_5">call qword [reloc.abort_128]</span>
 <span class="fc_12">|`--></span> <span class="fc_4">0x000036f8</span>      c705<span class="fc_6">36</span>dc<span class="fc_6">21</span><span class="4">00</span>.  mov dword [<span class="fc_6">0x00221338</span>], <span class="fc_6">0</span>
 </pre>
-<p>Not too pretty, right? That's because r2 doesn't assume utf-8 support. However, it has a handy config variable that can help us out here - <code>e scr.utf8</code>, which is set to <code>false</code> by default. Let's try enabling it.</p>
+<p>Not too pretty, right? That's because r2 doesn't assume utf-8 support. However, it has a handy
+config variable that can help us out here - <code class="custom-inline-code">e scr.utf8</code>,
+which is set to <code class="custom-inline-code">false</code> by default. Let's try enabling it.</p>
 <pre class="custom-code-block">
 <span class="fc_6">[0x000036de]></span> e scr.utf8 = true
 <span class="fc_6">[0x000036de]></span> pd 7
@@ -21,7 +25,12 @@
 <span class="fc_12">│││</span>   <span class="fc_4">0x000036f2</span>      <span class="fc_2">ff</span>1588c5<span class="fc_6">21</span><span class="fc_4">00</span>   <span class="fc_5">call qword [reloc.abort_128]</span>
 <span class="fc_12">│└──></span> <span class="fc_4">0x000036f8</span>      c705<span class="fc_6">36</span>dc<span class="fc_6">21</span><span class="4">00</span>.  mov dword [<span class="fc_6">0x00221338</span>], <span class="fc_6">0</span>
 </pre>
-<p>Now isn't that much better to look at? But that's not enough now, is it? xvilka posted an issue recently (<a href="https://github.com/radare/radare2/issues/8586">#8586</a>) about adding curved corners to reflines, like in tig. And so I took that up, and added another config variable for it, <code>scr.utf8.curvy</code>. Let's see what we get by setting that to <code>true</code>. <em>Note: for this to work, you need to also have</em> <code>e scr.utf8 = true</code>.
+<p>Now isn't that much better to look at? But that's not enough now, is it? xvilka posted an issue
+recently (<a href="https://github.com/radare/radare2/issues/8586">#8586</a>) about adding curved
+corners to reflines, like in tig. And so I took that up, and added another config variable for it,
+<code class="custom-inline-code">scr.utf8.curvy</code>. Let's see what we get by setting that to
+<code class="custom-inline-code">true</code>. <em>Note: for this to work, you need to also have</em>
+<code class="custom-inline-code">e scr.utf8 = true</code>.
 <pre class="custom-code-block">
 <span class="fc_6">[0x000036de]></span> e scr.utf8.curvy = true
 <span class="fc_6">[0x000036de]></span> pd 7

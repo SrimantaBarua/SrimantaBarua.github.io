@@ -1,6 +1,22 @@
-<p>I guess in the last post I didn't really elaborate on why we need to get memory offsets into the gdb client. So here's the 20-second version. When a process is loaded for execution by the operating system, it needs to map the various regions in the program (code, data etc.) into memory. Due to a modern-day security feature called ASLR (Address Space Layout Randomization), operating systems randomize this layout. Now in order to properly analyze where things are, r2 needs to know the base address of the various sections of the executable, to properly rebase symbol information. And so, we need to get these offsets.</p>
-<p>How does GDB do this? Well.. I'm not really sure. How do we plan to do this? The radare2 debug API has a function, <code>r_debug_get_baddr()</code> which reads in the process memory map, finds the base of the first program segment, and returns the base address with which to rebase symbols. Pretty neat, huh?</p>
-<p>So what do I mean by reading the process' memory map? Most operating systems have some way to keep track of where stuff is mapped in the address space of a process. This includes the process's code and data, along with shared libraries. Some also map the kernel into the address space of the process.. But the point is, they also provide an interface for accessing this information. On a Linux-based system for instance, process information is stored inside the <code>/proc/&lt;pid&gt;/</code> directory, with the memory map in <code>/proc/&lt;pid&gt;/maps</code>. A typical memory map on a Linux system looks something like this -</p>
+<p>I guess in the last post I didn't really elaborate on why we need to get memory offsets into the
+gdb client. So here's the 20-second version. When a process is loaded for execution by the operating
+system, it needs to map the various regions in the program (code, data etc.) into memory. Due to a
+modern-day security feature called ASLR (Address Space Layout Randomization), operating systems
+randomize this layout. Now in order to properly analyze where things are, r2 needs to know the base
+address of the various sections of the executable, to properly rebase symbol information. And so, we
+need to get these offsets.</p>
+<p>How does GDB do this? Well.. I'm not really sure. How do we plan to do this? The radare2 debug
+API has a function, <code class="custom-inline-code">r_debug_get_baddr()</code> which reads in the
+process memory map, finds the base of the first program segment, and returns the base address with
+which to rebase symbols. Pretty neat, huh?</p>
+<p>So what do I mean by reading the process' memory map? Most operating systems have some way to
+keep track of where stuff is mapped in the address space of a process. This includes the process's
+code and data, along with shared libraries. Some also map the kernel into the address space of the
+process.. But the point is, they also provide an interface for accessing this information. On a
+Linux-based system for instance, process information is stored inside the
+<code class="custom-inline-code">/proc/&lt;pid&gt;/</code> directory, with the memory map in
+<code class="custom-inline-code">/proc/&lt;pid&gt;/maps</code>. A typical memory map on a Linux
+system looks something like this -</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_4">cat</span> /proc/4172/maps
 00400000-00401000 r-xp 00000000 08:11 5373982             /home/user/test/a.out
@@ -13,8 +29,20 @@
 7ffffffde000-7ffffffff000 rw-p 00000000 00:00 0           [stack]
 ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
 </pre>
-<p>The stuff on the left is memory address ranges. Then you have permissions and stuff. And at the end is the name of what is mapped to this range. So from here we know that we need to rebase the symbols by <code>0x00401000</code>, which is the base address of the text section. And all's well and good here.</p>
-<p>How do we do this when we're debugging remotely, from a gdbserver? Well as I said above, r2 rebases symbols by reading the process memory map. So we do the same. We read <code>/proc/&lt;pid&gt;/maps</code> from the gdbserver. Now note that this only works for a gdbserver running on a Linux system, since other operating systems would have a different way of storing process information. But we're working on it - there's a plan to add a <em>target</em> interface for GDB debugging, which will sit between r2 and the GDB protocol implementation. But anyway, the current implementation asks the gdbserver to read the maps file and send it across, and parses it into r2's internal memory map representation. And so, we can now revel in the colourful display of r2's <code>dm=</code> command, for a process being debugged over gdbserver.</p>
+<p>The stuff on the left is memory address ranges. Then you have permissions and stuff. And at the
+end is the name of what is mapped to this range. So from here we know that we need to rebase the
+symbols by <code class="custom-inline-code">0x00401000</code>, which is the base address of the text
+section. And all's well and good here.</p>
+<p>How do we do this when we're debugging remotely, from a gdbserver? Well as I said above, r2
+rebases symbols by reading the process memory map. So we do the same. We read <code
+class="custom-inline-code">/proc/&lt;pid&gt;/maps</code> from the gdbserver. Now note that this only
+works for a gdbserver running on a Linux system, since other operating systems would have a
+different way of storing process information. But we're working on it - there's a plan to add a
+<em>target</em> interface for GDB debugging, which will sit between r2 and the GDB protocol
+implementation. But anyway, the current implementation asks the gdbserver to read the maps file and
+send it across, and parses it into r2's internal memory map representation. And so, we can now revel
+in the colourful display of r2's <code class="custom-inline-code">dm=</code> command, for a process
+being debugged over gdbserver.</p>
 <pre class="custom-code-block">
 <span class="fc_6">[0x7ffff7ddad80]></span> dm=
 sys     4K * <span class="fc_4">0x0000000000400000</span> |#------| <span class="fc_4">0x0000000000401000</span> -r-x /home/user/test/a.out
@@ -28,7 +56,10 @@ sys   132K - <span class="fc_2">0x00007ffffffde000</span> |-------| <span class=
 sys     4K - <span class="fc_4">0xffffffffff600000</span> |-------| <span class="fc_4">0xffffffffff601000</span> -r-x [vsyscall]
 <span class="fc_6">[0x7ffff7ddad80]></span>
 </pre>
-<p>Now we get to the meat of the matter. How does this help us? Well, I've not yet implemented automatic loading and rebasing of symbols, but what this does let us do is load the file manually with the <code>oa</code> command, specifying the offset with which to rebase symbols. And then r2's analysis can work its magic.</p>
+<p>Now we get to the meat of the matter. How does this help us? Well, I've not yet implemented
+automatic loading and rebasing of symbols, but what this does let us do is load the file manually
+with the <code class="custom-inline-code">oa</code> command, specifying the offset with which to
+rebase symbols. And then r2's analysis can work its magic.</p>
 <pre class="custom-code-block">
 <strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
 = attach 6 6
