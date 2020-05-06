@@ -100,6 +100,11 @@ p a:hover {
   margin-right: 1em;
 }
 
+.project-name:hover {
+  cursor: pointer;
+  color: #AAAAAA;
+}
+
 .project-langs {
   margin-left: 1em;
   font-size: 0.8em;
@@ -119,11 +124,11 @@ p a:hover {
 
 .blog-title {
   margin-right: 1em;
-  color: #AAAAAA;
 }
 
 .blog-title:hover {
   cursor: pointer;
+  color: #AAAAAA;
 }
 
 .blog-date {

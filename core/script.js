@@ -107,9 +107,8 @@ function display_projects() {
             const proj_name = projects[i].name.replace('\'', '\\\'').replace('"', '&quot;');
             const fncall = "load_project('" + proj_id + "','" + proj_name + "')"
             elem_html += '<div class="project" id="' + proj_id + '">'
-            elem_html += '<div class="project-blurb"><h3 class="project-name">'
-            elem_html += '<a href="#" onClick="' + fncall + '">';
-            elem_html += projects[i].name + '</a></h3><p class="project-langs">';
+            elem_html += '<div class="project-blurb"><h3 class="project-name" onClick="' + fncall + '">'
+            elem_html += projects[i].name + '</h3><p class="project-langs">';
             const langs = projects[i].langs;
             if (langs.length > 0) {
                 elem_html += langs[0];
