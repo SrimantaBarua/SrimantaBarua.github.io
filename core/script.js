@@ -14,77 +14,6 @@ const MONTHS = [
 ];
 
 
-// Sliding functions from https://w3bits.com/javascript-slidetoggle/
-
-
-const DURATION = 500;
-
-
-function slide_up(elem) {
-    elem.style.transitionProperty = "height, margin, padding";
-    elem.style.transitionDuration = DURATION + "ms";
-    elem.style.boxSizing = "border-box";
-    elem.style.height = elem.offsetHeight + "px";
-    elem.style.height = 0;
-    elem.style.paddingTop = 0;
-    elem.style.paddingBottom = 0;
-    elem.style.marginTop = 0;
-    elem.style.marginBottom = 0;
-    elem.style.overflow = "hidden";
-    window.setTimeout(function() {
-        elem.style.display = "none";
-        elem.style.removeProperty("height");
-        elem.style.removeProperty("padding-top");
-        elem.style.removeProperty("padding-bottom");
-        elem.style.removeProperty("margin-top");
-        elem.style.removeProperty("margin-bottom");
-        elem.style.removeProperty("overflow");
-        elem.style.removeProperty("transition-duration");
-        elem.style.removeProperty("transition-property");
-    }, DURATION);
-}
-
-
-function slide_down(elem) {
-    elem.style.removeProperty("display");
-    let display = window.getComputedStyle(elem).display;
-    if (display == "none") {
-        display = "block";
-    }
-    elem.style.display = display;
-    let height = elem.offsetHeight;
-    elem.style.height = 0;
-    elem.style.paddingTop = 0;
-    elem.style.paddingBottom = 0;
-    elem.style.marginTop = 0;
-    elem.style.marginBottom = 0;
-    elem.style.overflow = "hidden";
-    elem.style.boxSizing = "border-box";
-    elem.style.transitionProperty = "height, margin, padding";
-    elem.style.transitionDuration = DURATION + "ms";
-    elem.style.height = height + "px";
-    elem.style.removeProperty("padding-top");
-    elem.style.removeProperty("padding-bottom");
-    elem.style.removeProperty("margin-top");
-    elem.style.removeProperty("margin-bottom");
-    window.setTimeout(function() {
-        elem.style.removeProperty("height");
-        elem.style.removeProperty("overflow");
-        elem.style.removeProperty("transition-duration");
-        elem.style.removeProperty("transition-property");
-    }, DURATION);
-}
-
-
-function slide_toggle(elem) {
-    if (window.getComputedStyle(elem).display == "none") {
-        return slide_down(elem);
-    } else {
-        return slide_up(elem);
-    }
-}
-
-
 function load_blog(elem, blog_key) {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/blog/" + blog_key);
@@ -105,7 +34,7 @@ function blog_show_toggle(blog_id, blog_key) {
     if (elem.childElementCount < 2) {
         load_blog(elem, blog_key);
     } else {
-        slide_toggle(elem.children[1]);
+        $(elem.children[1]).slideToggle("slow");
     }
 }
 
@@ -131,9 +60,8 @@ function display_blogs() {
             const blog_id = 'blog-num-' + i.toString();
             const fncall = "blog_show_toggle('" + blog_id + "','" + blogs[i].key.toString() + "')"
             elem_html += '<div class="blog" id="' + blog_id + '">'
-            elem_html += '<div class="blog-blurb"><h3 class="blog-title">'
-            elem_html += '<a href="#" onClick="' + fncall + '">';
-            elem_html += blogs[i].title + '</a></h3><p class="blog-date">';
+            elem_html += '<div class="blog-blurb"><h3 class="blog-title" onClick="' + fncall + '">'
+            elem_html += blogs[i].title + '</h3><p class="blog-date">';
             elem_html += datefmt + "</p></div></div>";
         }
         // Insert into DOM

@@ -119,6 +119,11 @@ p a:hover {
 
 .blog-title {
   margin-right: 1em;
+  color: #AAAAAA;
+}
+
+.blog-title:hover {
+  cursor: pointer;
 }
 
 .blog-date {
