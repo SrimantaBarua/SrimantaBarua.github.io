@@ -15,6 +15,9 @@ const MONTHS = [
 
 
 function load_blog(elem, blog_key) {
+    var load_node = document.createElement("div");
+    load.classList.add("load-spinner");
+    elem.appendChild(load_node);
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/blog/" + blog_key);
     xhr.responseType = "text";
@@ -23,7 +26,7 @@ function load_blog(elem, blog_key) {
         var node = document.createElement("div");
         node.classList.add("blog-text");
         node.innerHTML = xhr.response;
-        elem.appendChild(node);
+        elem.children[1] = node;
         Prism.highlightAllUnder(elem);
     }
 }
@@ -75,6 +78,9 @@ function load_project(proj_id, proj_name) {
     if (elem.childElementCount >= 2) {
         return;
     }
+    var load_node = document.createElement("div");
+    load.classList.add("load-spinner");
+    elem.appendChild(load_node);
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/project/" + proj_name);
     xhr.responseType = "text";
@@ -83,7 +89,7 @@ function load_project(proj_id, proj_name) {
         var node = document.createElement("div");
         node.classList.add("project-description");
         node.innerHTML = xhr.response;
-        elem.appendChild(node);
+        elem.children[1] = node;
     }
 }
 

@@ -229,3 +229,24 @@ p a:hover {
 .fc_15 {
 	color: #ebdbb2;
 }
+
+/* SPINNER ANIMATION */
+
+.load-spinner {
+  border: 2px solid #AAAAAA;
+  border-top: 2px solid #444444;
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+  animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin  {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
