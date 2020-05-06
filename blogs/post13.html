@@ -1,12 +1,13 @@
 <p><a href="https://github.com/minos-org/dzen2">dzen2</a> is a fork of <a href="https://github.com/robm/dzen">dzen</a>, which is a <em>general purpose messaging, notification and menuing program for X11.</em> What most people use it for, however, is to create cool-looking and highly functional statusbars/docks. (Just look at <a href="https://imgur.com/bZegioR">earsplit's desktop</a> to get an idea).</p>
 <p>How you go about doing this, is you craft the content of the status line, and pipe it into dzen2. Let's try a sample "Hello world" to demonstrate. I'll periodically write the output of <code>date</code>, with a 1 second sleep, to dzen2.</p>
-<pre class="command-line language-bash" data-user="barua" data-host="box"><code class="language-bash">while :; do date; sleep 1; done | dzen2</code></pre>
+<pre class="custom-code-block">
+<strong>$</strong> <span class="fc_6">while</span> <span class="fc_4">:</span>; <span class="fc_6">do</span> <span class="fc_4">date</span>; <span class="fc_4">sleep</span> 1; <span class="fc_6">done</span> | <span class="fc_4">dzen2</span>
+</pre>
 <p>Usually, you'd probably do this in Bash or Python, which is the sane thing to do. I, however, prefer to stick to C. So here we go.</p>
 <p>Let's start with a goal in mind. I want to get a bar which outputs the current music I'm playing and its playing/paused state, the current audio volume, WiFi SSID, battery percentage with colour coding, kernel version, and date/time. So let's put a framework in place for that. Now, since the different elements are probably going to change at different rates, how I'm going to do this is maintain global buffers for each element, which will be updated at different times, and which I'll then combine into a consolidated statusline when any element has changed, and pipe this to dzen2.</p>
 <pre><code class="language-c">
 #include &lt;stdio.h&gt;
 #include &lt;stdlib.h&gt;
-
 
 static char music_buf[128] = { 0 };
 static char volume_buf[128] = { 0 };
