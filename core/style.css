@@ -66,12 +66,12 @@ a:hover {
   width: 50%;
 }
 
-p a {
+#content a {
   color: #444444;
   border-bottom: 1px #444444 solid;
 }
 
-p a:hover {
+#content a:hover {
   color: #AAAAAA;
   border-bottom: 1px #AAAAAA solid;
 }

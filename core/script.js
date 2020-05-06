@@ -48,6 +48,9 @@ function display_blogs() {
     if (place_to_insert.childElementCount > 0) {
         return;
     }
+    var load_node = document.createElement("div");
+    load_node.classList.add("load-spinner");
+    place_to_insert.appendChild(load_node);
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/blogs/list");
     xhr.responseType = "json";
@@ -69,16 +72,13 @@ function display_blogs() {
             elem_html += datefmt + "</p></div></div>";
         }
         // Insert into DOM
+        place_to_insert.children[1].remove();
         place_to_insert.innerHTML = elem_html;
     }
 }
 
 
-function load_project(proj_id, proj_name) {
-    var elem = document.getElementById(proj_id);
-    if (elem.childElementCount >= 2) {
-        return;
-    }
+function load_project(elem, proj_name) {
     var load_node = document.createElement("div");
     load_node.classList.add("load-spinner");
     elem.appendChild(load_node);
@@ -96,11 +96,24 @@ function load_project(proj_id, proj_name) {
 }
 
 
+function project_show_toggle(proj_id, proj_name) {
+    var elem = document.getElementById(proj_id);
+    if (elem.childElementCount < 2) {
+        load_project(elem, proj_name);
+    } else {
+        $(elem.children[1]).slideToggle("slow");
+    }
+}
+
+
 function display_projects() {
     var place_to_insert = document.getElementById("content-projects");
     if (place_to_insert.childElementCount > 0) {
         return;
     }
+    var load_node = document.createElement("div");
+    load_node.classList.add("load-spinner");
+    place_to_insert.appendChild(load_node);
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "api/projects/list");
     xhr.responseType = "json";
@@ -127,6 +140,7 @@ function display_projects() {
             elem_html += "</p></div></div>";
         }
         // Insert into DOM
+        place_to_insert.children[1].remove();
         place_to_insert.innerHTML = elem_html;
     }
 }
