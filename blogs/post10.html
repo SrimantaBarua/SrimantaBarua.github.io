@@ -1,0 +1,35 @@
+<p>Now we're really heating up. r2's analysis works best when it can read in the symbols from the binary being analyzed. The same holds for analysis during a debug session. As discussed in <a onclick="scroll_to_id('post7')">a previous post</a>, this requires two things - the actual binary which was executed, and the base address with which to rebase symbols. Since we've implemented calculating the base address of the binary, we now focus on getting the filename of the binary. The gdb protocol provides an optional packet, <code>qXfer:exec-file:read</code> which, if the gdbsever supports it, gives us the filename. It's also handy to add this to the IO system interface -</p>
+<pre class="custom-code-block">
+<strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
+= attach 4231 1
+= attach 4231 4231
+<span class="fc_6">[0x7f7ec8310cc0]></span> =!?
+...
+ =!exec_file [pid] - get file which was executed for current/specified pid
+<span class="fc_6">[0x7f7ec8310cc0]></span> =!exec_file
+/usr/bin/ls
+</pre>
+<p>Well that's fine. Now how do we use this to load symbols? Truth be told, I was stuck at this point for quite some time, and took up other tasks from my TODO list. And then it finally struck me. I read in the file name  in the <code>io_gdb</code> plugin during connecting, passed it up to the <code>RCoreFile</code> that was created for the remote connection, which in turn passed it up to <code>main()</code> in <code>binr/radare2.c</code>. From there, I made a special case for gdb (yeah sounds untidy, but that part is.. not pretty anyway), where we check if the exec file path we've been passing up is valid, and present on the  local machine. If yes, we get the base address (as discussed previously), and load symbols from the binary on the local machine. In addition, based on suggestions from xvilka and pancake, if the binary is not present on the same path, we check if it is present in the current working directory of the r2 instance. And finally, I added an internal config variable, <code>e dbg.exe.path</code>, which if set overrides the logic described above, and symbols are loaded from the binary at that path (if it exists).</p>
+<p>Phew. Now let's see it in action.</p>
+<pre class="custom-code-block">
+<strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
+= attach 19829 1
+= attach 19829 19829
+Assuming filepath /home/user/radare2/binr/radare2/radare2
+ -- Good morning, pal *<:-)
+<span class="fc_6">[0x7f90e9f23cc0]></span> aa
+<span class="fc_4">[x]</span> Analyze all flags starting with sym. and entry0 (aa)
+<span class="fc_6">[0x7f90e9f23cc0]></span> afl
+0x100000000    3 73   -> 75   sym.imp.r_fs_version
+0x100002798    3 23           sym._init
+0x1000027d0    2 16   -> 48   sym.imp.r_core_cmd0
+0x1000027e0    2 16   -> 48   sym.imp.r_config_set
+...
+0x100003aaa    1 40           sym.main
+...
+<span class="fc_6">[0x7f90e9f23cc0]></span> dcu sym.main
+Continue until 0x100003aaa using 1 bpsize
+hit breakpoint at: 100003aaa
+<span class="fc_6">[0x100003aaa]></span>
+</pre>
+<p>Yep. <code>main()</code> is at <code>0x100003aaa</code>, and that's where we reach.</p>

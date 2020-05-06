@@ -1,0 +1,58 @@
+<p>Yeah dual posts are sad. But so much happens in r2land so quickly, it's hard to keep up.</p>
+<p>In case you've never worked with remote gdb, here's a quick run down of what monitor commands are - They're a way to extend gdb. Monitor commands are passed as they are to the remote stub, and it interprets them in its own way. Just to highlight the differences, here's the output of <code>monitor help</code> for gdbserver, and the qemu gdb stub -</p>
+<pre class="custom-code-block">
+<strong>-- gdbserver --</strong>
+
+(gdb) monitor help
+The following monitor commands are supported:
+  set debug <0|1>
+    Enable general debugging messages
+  set debug-hw-points <0|1>
+    Enable h/w breakpoint/watchpoint debugging messages
+  set remote-debug <0|1>
+    Enable remote protocol debugging messages
+  set debug-format option1[,option2,...]
+    Add additional information to debugging messages
+    Options: all, none, timestamp
+  exit
+    Quit GDBserver
+</pre>
+<pre class="custom-code-block">
+<strong>-- qemu gdb stub --</strong>
+
+(gdb) monitor help
+acl_add aclname match allow|deny [index] -- add a match rule to the access control list
+acl_policy aclname allow|deny -- set default access control list policy
+acl_remove aclname match -- remove a match rule from the access control list
+...
+</pre>
+<p>Now since we're implementing gdb remote debugging in r2, we need a way to send monitor commands to the remote stub. This was initially brought up by people working with the OpenOCD gdbserver. And it was pretty easy to implement, actually. The gdb protocol specifies a <code>qRcmd</code> packet, where the command is hex-encoded and sent to the remote gdb stub, which then passes it through its internal interpreter. I added the capability to the IO system again, under <code>=!monitor</code></p>
+<pre class="custom-code-block">
+<strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
+...
+<span class="fc_6">[0x7ffff7dd9d00]></span> =!monitor help
+The following monitor commands are supported:
+  set debug <0|1>
+    Enable general debugging messages
+  set debug-hw-points <0|1>
+    Enable h/w breakpoint/watchpoint debugging messages
+  set remote-debug <0|1>
+    Enable remote protocol debugging messages
+  set debug-format option1[,option2,...]
+    Add additional information to debugging messages
+    Options: all, none, timestamp
+  exit
+    Quit GDBserver
+</pre>
+<p>Next order of business? r2 wasn't being able to recognize when the remote process exited or was terminated, and was thus sending messages to the remote stub which was causing it to exit ... ungracefully. This was because the packet gdbserver would send on querying the stop reason with <code>?</code> was different from that which it had sent on initially stopping, (as a reply to step or continue.) So that was easily solved, by making sure the stop reason reported after a step/continue operation remains valid till either the next operation, or the next query for stop reason (whichever happens earlier).</p>
+<pre class="custom-code-block">
+<strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
+= attach 3648 1
+= attach 3648 3648
+<span class="fc_6">[0x7ffff7dd9d00]></span> dc
+Process 3648 exited with status 0
+
+==> Process finished
+
+<span class="fc_6">[0x00000000]></span> dc
+</pre>

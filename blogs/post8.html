@@ -1,0 +1,66 @@
+<p>What is a <em>register profile</em>? Well, since radare2 supports muliple architectures, it needs a way to store register names, data, roles etc. in a way that works for all architectures. So the solution is to have a data buffer where reg data is stored, and <em>reg items</em> which store stuff like the name of the register, and its offset into the data buffer. Simple as that.</p>
+<p>To describe these register profiles, r2 has its own register profile string syntax. Looks something like this -</p>
+<pre class="custom-code-block">
+=PC	rip
+=SP	rsp
+...
+gpr	rax	.64	0	0
+gpr	rbx	.64	8	0
+...
+fpu	st0	.80	164	0
+fpu	st1	.80	174	0
+...
+</pre>
+<p>Yeah "what?" The lines beginning with <code>=</code> are aliases, for register types that are common across architectures (For instance <code>PC</code> is the program counter, and for x86_64 that's the <code>rip</code> register). Next we have definitions of the registers themselves. For instance, <code>rax</code> is a <code>gpr</code> (general purpose register), 64 bits, and at an offset of 0 in the data block (I still don't know what the last 0 is for though..)</p>
+<p>Now gdb has it's own register-profile format, which is quite different from r2's. And here lies the problem. <em>Since register contents are sent over as a big chunk of data, we need to know at what offset in the data block a given register starts.</em> This isn't possible unless the r2 and gdb register profiles are synced.</p>
+<p>Back in the day, pancake used to do this by hand. But the r2 GitHub repo had an old issue asking for a <code>drp</code> sub-command to parse a gdb register profile and dump an r2 one. And so I took to implementing that. And the results are fairly satisfactory -</p>
+<pre class="custom-code-block">
+<span class="fc_6">[0x7ffff7dd9d00]></span> !head gdbreg
+Name         Nr  Rel Offset    Size  Type            Groups
+ rax           0    0      0       8 int64_t         general,all,save,restore
+ rbx           1    1      8       8 int64_t         general,all,save,restore
+ rcx           2    2     16       8 int64_t         general,all,save,restore
+ rdx           3    3     24       8 int64_t         general,all,save,restore
+ rsi           4    4     32       8 int64_t         general,all,save,restore
+ rdi           5    5     40       8 int64_t         general,all,save,restore
+ rbp           6    6     48       8 *1              general,all,save,restore
+ rsp           7    7     56       8 *1              general,all,save,restore
+ r8            8    8     64       8 int64_t         general,all,save,restore
+<span class="fc_6">[0x7ffff7dd9d00]></span> drp?
+|<span class="fc_4">Usage: arp # Register profile commands</span>
+| drp                           <span class="fc_4">Show the current register profile</span>
+| drp <span class="fc_6">[regprofile-file]</span>         <span class="fc_4">Set the current register profile</span>
+| drpi <span class="fc_6">[gdb] [regprofile-file]</span>  <span class="fc_4">Parse gdb register profile and dump an r2 profile string</span>
+| drp.                          <span class="fc_4">Show internal representation of the register profile</span>
+| drpj                          <span class="fc_4">Show the current fake size</span>
+| drps                          <span class="fc_4">Show the current register profile (JSON)</span>
+| drps <span class="fc_6">[new fake size]</span>          <span class="fc_4">Set the fake size</span>
+<span class="fc_6">[0x7ffff7dd9d00]></span> drp gdb gdbreg
+gpr	rax	.64	0	0
+gpr	rbx	.64	8	0
+gpr	rcx	.64	16	0
+gpr	rdx	.64	24	0
+gpr	rsi	.64	32	0
+gpr	rdi	.64	40	0
+gpr	rbp	.64	48	0
+gpr	rsp	.64	56	0
+gpr	r8	.64	64	0
+</pre>
+<p>The next issue that was bugging r2land was to do with packet sizes. A lot of people were reporting that gdbservers were segfaulting, or that they were getting <code>Garbage at end of packet</code> and it was messing up their debugging session. After staring at a few pcaps of debugging sessions of r2 with simavr, I found that the problem was to do with r2 not honoring the maximum supported packet size reported by the gdbserver. Also, in the case where packet size is <em>not</em> reported. r2's defaults were way too high.</p>
+<p>So I set about cutting the default down to 64 bytes (which ought to be safe. Come on!). This obviously would be inefficient for gdbservers which the user knows to support bigger packet sizes. So the next step was a way to set the packet size during runtime. And so I added it to the IO system interface -</p>
+<pre class="custom-code-block">
+<span class="fc_6">[0x7ffff7dd9d00]></span> =!?
+Usage: =!cmd args
+ ...
+ =!pktsz           - get max packet size used
+ =!pktsz bytes     - set max. packet size as 'bytes' bytes
+ ...
+</pre>
+<p>And then to wrap it up, I added the option of setting the max packet size before execution, with an environment variable, <code>R2_GDB_PKTSZ</code></p>
+<pre class="custom-code-block">
+<strong>$</strong> <span>export</span> R2_GDB_PKTSZ=64
+<strong>$</strong> <span class="fc_4">r2</span> -d gdb://localhost:8000
+...
+<span class="fc_6">[0x7ffff7dd9d00]></span> =!pktsz
+64
+</pre>
