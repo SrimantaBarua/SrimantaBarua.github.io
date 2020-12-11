@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="Musings of a hobbyist systems programmer."/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"/>
+  <script src="https://kit.fontawesome.com/18f2b92130.js" crossorigin="anonymous"></script>
+  <title>Srimanta Barua</title>
+</head>
+
+<body>
+  <div class="site">
+
+    <div class="common-header">
+      <div class="title">
+        <img class="sidebar-img circle my-photo" src="/images/srimanta_barua_128x128.jpg">
+        <div class="title-text">
+          <h1 class="name"><a href="/">Srimanta Barua</a></h1>
+          <div class="contact">
+            <a href="mailto:srimanta.barua1@gmail.com" class="contact-link"><i class="fas fa-envelope"></i></a>
+            <a href="https://github.com/SrimantaBarua" class="contact-link"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/in/srimanta-barua" class="contact-link"><i class="fab fa-linkedin"></i></a>
+          </div><!-- contact -->
+        </div><!-- title-text -->
+      </div><!-- title -->
+
+      <div class="navbar">
+        <a class="navbar-elem" href="/">ABOUT</a>
+        <a class="navbar-elem" href="/education/">EDUCATION</a>
+        <a class="navbar-elem" href="/work/">WORK</a>
+        <a class="navbar-elem" href="/projects/">PROJECTS</a>
+        <a class="navbar-elem" href="/blog/">BLOG</a>
+      </div><!-- navbar -->
+    </div><!-- common-header -->
+
+    <div class="content" id="content-projects">
+      <div class="project-entry" id="project-tmos">
+        <div class="project-text">
+          <div class="project-title">
+            <a href="https://github.com/SrimantaBarua/tmos/tree/bootload">tmos (Tiny Microkernel Operating System)</a>
+          </div><!-- project-title -->
+          <div class="project-description">
+            <p><strong>tmos</strong> is the 4th iteration of my experiment with writing an operating system and bootloader from scratch, in C and NASM assembly. It currently only supports x86_64, but the architecture-specific code has been cleanly separated out, so it could theoretically be extended to other architectures. It can't quite run userspace applications yet... I haven't had much time to devote to this project the last few years.</p>
+          </div><!-- project-description -->
+        </div><!-- project-text -->
+      </div><!-- project-entry -->
+      <div class="project-entry" id="project-bed">
+        <div class="project-text">
+          <div class="project-title">
+            <a href="https://github.com/SrimantaBarua/bed">bed (Barua's EDitor)</a>
+          </div><!-- project-title -->
+          <div class="project-description">
+            <p><strong>bed</strong> is a high-performance text editor I am writing from scratch in <a href="https://www.rust-lang.org/">Rust</a>. It uses OpenGL for rendering on the GPU, supports Vim-style modal editing, has a JSON configuration and theme specification format, and supports syntax highlighting with <a href="https://tree-sitter.github.io/tree-sitter/">Tree-sitter</a>. It has a fully custom UI implementation, with my own font stack which uses <a href="https://github.com/harfbuzz/harfbuzz">HarfBuzz</a> for text shaping, <a href="https://www.freetype.org/">FreeType</a> for rasterizing glyphs, and either <a href="https://www.freedesktop.org/wiki/Software/fontconfig/">Fontconfig</a> or <a href="https://docs.microsoft.com/en-us/windows/win32/directwrite/direct-write-portal">DirectWrite</a> for platform-specific system font discovery (I don't support Mac yet 'cause I'm poor). It also has initial support for the <a href="https://microsoft.github.io/language-server-protocol/">Language Server Protocol</a>, so it highlights errors/warnings and shows detailed descriptions on hover. There's also some initial work on completion - it supports completion of paths on your filesystem, and I've started work on including completions provided by the language server.</p>
+            <p>I am actually in the process of rewriting it with a pure-Rust font stack which I'm calling <strong>rype</strong> for now, as a replacement for the current stack based on HarfBuzz + FreeType + Fontconfig/DirectWrite. In this rewrite, I'm also writing code to directly interface with the X server on Linux, or call WinAPI functions on Windows.</p>
+          </div><!-- project-description -->
+        </div><!-- project-text -->
+      </div><!-- project-entry -->
+      <div class="project-entry" id="project-bperf">
+        <div class="project-text">
+          <div class="project-title">
+            <a href="https://github.com/SrimantaBarua/bperf">bperf</a>
+          </div><!-- project-title -->
+          <div class="project-description">
+            <p><strong>bperf</strong> is a command-line utility for fine-grained low-overhead system-level profiling by polling Intel hardware counters. I wrote it as part of my course project for the CS-6235 Real-Time Systems course at Georgia Tech.</p>
+            <p>It has two components - a Linux kernel module for the actual profiling, and a userspace application that configures the events to collect, reads data from the kernel module, and writes it to a csv file.</p>
+            <p>It's easy to extend the tool to support additional architectures or hardware events, by making minimal changes to the source code. The changes that would be required are highlighted in the README for the project.</p>
+          </div><!-- project- description -->
+        </div><!-- project-text -->
+      </div><!-- project-entry -->
+    </div><!-- content -->
+  </div><!-- site -->
+</body>
+
+</html>
