@@ -86,6 +86,7 @@ a:hover {
 }
 
 .navbar-elem {
+  text-transform: uppercase;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
   margin-left: 2em;
@@ -102,13 +103,41 @@ a:hover {
   padding-bottom: 0.5em;
 }
 
+.resume-section-header {
+  text-transform: uppercase;
+  color: #666666;
+  font-size: 1.5em;
+  font-weight: normal;
+  margin-bottom: 1em;
+}
+
+.resume-section {
+  margin-bottom: 3em;
+}
+
+#resume-section-work {
+  margin-bottom: 2em;
+}
+
+.publication-list {
+  margin-left: 32px;
+}
+
+.publication-authors {
+  font-size: 0.9em;
+}
+
+.publication-where {
+  font-size: 0.9em;
+}
+
 .education-entry {
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   display: flex;
   flex-flow: row nowrap;
   align-items: flex-start;
-  margin-bottom: 2em;
+  margin-bottom: 1em;
 }
 
 .education-text {
@@ -142,7 +171,6 @@ a:hover {
 
 .education-school {
   font-weight: bold;
-  font-size: 1.1em;
 }
 
 .education-duration {
@@ -161,7 +189,6 @@ a:hover {
   display: flex;
   flex-flow: row nowrap;
   align-items: flex-start;
-  margin-bottom: 1em;
 }
 
 .work-text {
@@ -202,7 +229,6 @@ a:hover {
 
 .work-company {
   font-weight: bold;
-  font-size: 1.1em;
 }
 
 .work-duration {
@@ -216,9 +242,9 @@ a:hover {
 }
 
 .work-tasks {
-  font-size: 0.85em;
+  font-size: 0.9em;
   margin-top: 0.5em;
-  margin-left: 2em;
+  margin-left: 32px;
   margin-bottom: 1em;
   color: #555555;
 }
@@ -245,7 +271,7 @@ a:hover {
 }
 
 .project-description {
-  font-size: 0.85em;
+  font-size: 0.9em;
   margin-top: 0.5em;
   margin-left: 1em;
   color: #555555;
