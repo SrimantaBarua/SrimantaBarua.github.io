@@ -5,7 +5,7 @@ body, pre, html, p, a, h1, h2, h3, h4, h5, h6, button, ul, li, header {
 
 html {
   font-family: Roboto;
-  font-size: 20px;
+  font-size: 18px;
   color: #333333;
 }
 
@@ -282,19 +282,9 @@ a:hover {
   padding-bottom: 0.5em;
   display: flex;
   flex-flow: row nowrap;
-  align-items: flex-start;
-  margin-bottom: 1em;
-}
-
-.blog-list-text {
-  flex-grow: 1;
-}
-
-.blog-list-line {
-  display: flex;
-  flex-flow: row nowrap;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1em;
 }
 
 .blog-list-title {
@@ -307,11 +297,7 @@ a:hover {
   color: #444444;
 }
 
-@media screen and (max-width: 1200px) {
-  html {
-    font-size: 18px;
-  }
-
+@media screen and (max-width: 1030px) {
   .site {
     width: 650px;
   }
@@ -324,20 +310,8 @@ a:hover {
 }
 
 @media screen and (max-width: 900px) {
-  html {
-    font-size: 16px;
-  }
-
   .site {
     width: 500px;
-  }
-
-  .education-duration {
-    display: none
-  }
-
-  .education-gpa {
-    display: none
   }
 
   .navbar {
@@ -357,5 +331,23 @@ a:hover {
 
   .sidebar-img {
     display: none
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .education-duration {
+    display: none;
+  }
+
+  .education-gpa {
+    display: none;
+  }
+
+  .work-duration {
+    display: none;
+  }
+
+  .work-location {
+    display: none;
   }
 }
