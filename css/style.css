@@ -254,6 +254,7 @@ a:hover {
   margin-left: 32px;
   margin-bottom: 1em;
   color: #555555;
+  text-align: left;
 }
 
 .project-entry {
