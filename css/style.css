@@ -199,6 +199,13 @@ a:hover {
   flex-grow: 0;
 }
 
+#work-google {
+  width: 2.5em;
+  height: 2.5em;
+  margin-left: -3.5em;
+  margin-right: 1em;
+}
+
 #work-gatech {
   width: 4em;
   height: 2em;
